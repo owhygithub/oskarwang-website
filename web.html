@@ -1,0 +1,80 @@
+<!-- fonts: Raleway  -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>owhy Photography</title>
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simple-icons@11.0.0/font/simple-icons.min.css">
+</head>
+<body>  
+    <div class="cursor"></div>
+    <div class="preloader">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Remove inline onclick from back button -->
+    <div class="back-btn">← Home</div>
+
+    <!-- Main Page -->
+    <div class="page main-page active-page">
+        <h1 class="logo">Oskar Wang Studios</h1>
+        <!-- Update nav buttons section -->
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="showPage('portfolio')">Portfolio</button>
+            <button class="nav-btn" onclick="showPage('contact')">Contact</button>
+            <button class="nav-btn shop-btn" onclick="redirectToShop()">Prints</button>
+        </div>
+        </div>
+    </div>
+
+    <!-- Portfolio Page -->
+    <div class="page portfolio-page">
+        <div class="scroll-gallery">
+            <div class="gallery-container">
+                <!-- Images will be loaded dynamically via JavaScript -->
+                <div class="gallery-item active">
+                    <img src="images/DSC01253.jpg" alt="Gallery Photo" class="gallery-image">
+                </div>
+            </div>
+            <div class="scroll-indicator">Scroll to view more</div>
+        </div>
+    </div>
+
+    <!-- Contact Page -->
+    <div class="page contact-page">
+        <div class="contact-content">
+            <div>
+                <h3>About Me</h3>
+                <p>Professional photographer specializing in event, portrait, and street photography. </p>
+                <br>
+                <h3>Locations</h3>
+                <p>The Netherlands 🇳🇱<br>The Czech Republic 🇨🇿</p>
+            </div>
+            <div>
+                <h3>Contact</h3>
+                <p>Email: oscarwang@email.cz</p>
+                <div class="social-links">
+                    <a href="https://www.instagram.com/owhy.ig" class="social-link" target="_blank"><i class="fab fa-instagram"></i></a>
+                    <a href="https://www.youtube.com/@owhyYT" class="social-link" target="_blank"><i class="fab fa-youtube"></i></a>
+                    <a href="https://www.linkedin.com/in/oscarhywang/" class="social-link" target="_blank"><i class="fab fa-linkedin"></i></a>
+                </div>
+                <br>
+                <p> For prints or copyright of pictures, please visit one of the following links: </p>
+                <div class="social-links">
+                    <a href="https://www.saatchiart.com/account/profile/2746365" class="social-link" target="_blank"><img src="logos/saatchi-art.png" alt="SaatchiArt" class="custom-icon"></a>
+                    <a href="https://500px.com" class="social-link" target="_blank"><i class="fab fa-500px"></i></a>
+                    <a href="https://www.shutterstock.com/g/oskarwang" class="social-link" target="_blank"><img src="logos/shutterstock-icon.svg" alt="Shutterstock" class="custom-icon"></a>
+                </div>
+            </div>
+            <p> <br> Always open to learn and embark on unique projects. </p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
