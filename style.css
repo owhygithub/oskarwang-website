@@ -37,7 +37,7 @@ body {
 
 .main-page {
     background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)),
-                url('logos/DSC01253.jpg') center/cover fixed;
+                url('logos/DSC07816.JPG') center/cover fixed;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -157,11 +157,12 @@ body {
 }
 
 .gallery-image {
-    max-width: 90%;
-    max-height: 90vh;
+    max-width: 80%;
+    max-height: 80vh;
     object-fit: contain;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     border-radius: 5px;
+    margin-top: 2rem; /* Add margin at the top to create more space from the back button */
 }
 
 .scroll-indicator {
@@ -226,9 +227,9 @@ body {
 
 .back-btn {
     position: fixed;
-    top: 2rem;
+    top: 1.5rem;
     left: 2rem;
-    padding: 0.5rem 0;
+    padding: 0.75rem 1rem;
     color: rgba(255,255,255,0.7);
     font-size: 1rem;
     cursor: none;
@@ -240,6 +241,8 @@ body {
     z-index: 1000; /* Ensure it's above other elements */
     pointer-events: none; /* Start with no pointer events */
     position: relative;
+    /* background-color: rgba(0, 0, 0, 0.5); /* Add semi-transparent background */
+    border-radius: 4px; /* Rounded corners */
 }
 
 .back-btn.visible {

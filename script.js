@@ -195,8 +195,17 @@ let images = [
     'DSC03632.jpg', 'DSC04801.jpg', 'DSC04880.jpg', 'DSC05173.jpg', 'DSC06304.jpg',
     'DSC06358.jpg', 'DSC06364.jpg', 'DSC06666.jpg', 'DSC07516.jpg', 'IMG_3600-v2.jpg',
     'IMG_3624.jpg', 'IMG_8920.jpg', 'IMG_8975.jpg', 'IMG_9008.jpg', 'IMG_9044.jpg',
-    '_MG_0205.jpg', '_MG_4667.jpg', '_MG_4669.jpg', 'bday-60th-4.jpg', 'bday-60th-40.jpg',
-    'bday-60th-6.jpg', 'edit4.jpg', 'warsaw-1418.jpg', 'warsaw-1449.jpg'
+    '_MG_4667.jpg', '_MG_4669.jpg', 'bday-60th-40.jpg',
+    'bday-60th-6.jpg', 'edit4.jpg', 'warsaw-1418.jpg', 'warsaw-1449.jpg', 'DSC08003.JPG',
+    'DSC07991.JPG', 'DSC07968.JPG', 'DSC07926.JPG', 'DSC07897.JPG'
+    , 'DSC07874.JPG'
+    , 'DSC07839.JPG'
+    , 'DSC07825.JPG'
+    , 'DSC07709.JPG'
+    , 'DSC07693.JPG'
+    , 'DSC07673.JPG'
+    , 'DSC07454.JPG'
+    , 'DSC07065.JPG'
 ];
 let isScrolling = false;
 let scrollTimeout;
