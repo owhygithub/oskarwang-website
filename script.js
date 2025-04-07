@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Optimized cursor variables
     let mouseX = 0, mouseY = 0;
     let cursorX = 0, cursorY = 0;
-    let speed = 0.12; // Reduced for smoother movement
+    let speed = 0.3; // Increased for more responsive movement
     
     // Use a boolean flag for hover state instead of changing properties repeatedly
     let isHovering = false;
@@ -46,14 +46,17 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Use pointer events for better performance across devices
     document.addEventListener('pointermove', (e) => {
-        // Direct assignment without throttling for smoother movement
-        // Modern browsers optimize RAF internally
+        // Direct assignment for immediate response
         mouseX = e.clientX;
         mouseY = e.clientY;
         
-        // Only update opacity if needed
+        // Set cursor position directly on first move for immediate response
         if (cursor.style.opacity !== '1') {
             cursor.style.opacity = '1';
+            // Jump to position immediately on first appearance
+            cursorX = mouseX;
+            cursorY = mouseY;
+            cursor.style.transform = `translate3d(${cursorX}px, ${cursorY}px, 0) ${baseTransform}`;
         }
     }, { passive: true }); // Use passive listener for better performance
     
@@ -68,6 +71,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset cursor position to current mouse position for immediate response
         cursorX = mouseX;
         cursorY = mouseY;
+        // Apply transform immediately
+        cursor.style.transform = `translate3d(${cursorX}px, ${cursorY}px, 0) ${baseTransform}`;
     });
     
     // Use event delegation for hover effects instead of attaching to each element
@@ -77,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (target.matches('a, button, .nav-btn, .portfolio-item img, .back-btn, .portfolio-category, .portfolio-album')) {
             cursor.style.borderBottomColor = '#ffffff';
             isHovering = true;
-            speed = 0.25; // Slightly faster on hover for better responsiveness
+            speed = 0.5; // Much faster on hover for better responsiveness
         }
     }, { passive: true });
     
@@ -86,10 +91,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (target.matches('a, button, .nav-btn, .portfolio-item img, .back-btn, .portfolio-category, .portfolio-album')) {
             cursor.style.borderBottomColor = '#ffea00';
             isHovering = false;
-            speed = 0.12; // Return to normal speed
+            speed = 0.3; // Return to normal speed
         }
     }, { passive: true });
-
+    
     });
     
     // Optimized ripple effect using event delegation
@@ -334,53 +339,139 @@ function showPhotosForAlbum(category, album) {
 }
 
 
+// Helper function to get image files from a folder - browser compatible version
+function getPhotosFromFolder(category, album) {
+    // This is a browser-compatible replacement for the Node.js file system operations
+    // It returns hardcoded arrays based on the category and album
+    const photoCollections = {
+        photojournalism: {
+            'Street Stories': ['DSC02950.jpg', 'DSC02967.jpg', 'DSC02982.jpg', 'DSC03056.jpg', 'warsaw-1418.jpg', 'warsaw-1449.jpg'],
+            'Eastern Europe': ['DSC03078.jpg', 'DSC03094.jpg', 'DSC03161.jpg', 'DSC03558.jpg', 'DSC03632.jpg'],
+            'The People': ['DSC02950.jpg', 'DSC02967.jpg', 'DSC02982.jpg', 'DSC03056.jpg', 'warsaw-1418.jpg', 'warsaw-1449.jpg']
+        },
+        portraits: {
+            'Commissions': ['DSC01486.jpg', 'DSC01497.jpg', 'DSC01512.jpg', 'DSC01576.jpg', '_MG_4667.jpg', '_MG_4669.jpg'],
+            'Friends & Family': ['DSC00533.jpg', 'DSC00559.jpg', 'DSC00582.jpg', 'DSC00622.jpg', 'IMG_3600-v2.jpg', 'IMG_3624.jpg']
+        },
+        events: {
+            'Public Events': ['BMW1.jpg', '55-DSC06358.jpg', '57-DSC06368.jpg', '78-DSC06461.jpg', 'DSC06304.jpg', 'DSC06358.jpg', 'DSC06364.jpg', 'DSC06666.jpg'],
+            'Private Events': ['bday-60th-6.jpg', 'bday-60th-40.jpg', 'DSC07516.jpg', 'DSC07991.JPG', 'DSC07968.JPG'],
+            'Brands': ['BMW1.jpg', '55-DSC06358.jpg', '57-DSC06368.jpg', '78-DSC06461.jpg', 'DSC06304.jpg', 'DSC06358.jpg', 'DSC06364.jpg', 'DSC06666.jpg']
+        },
+        personal: {
+            'Travel': ['DSC07926.JPG', 'DSC07897.JPG', 'DSC08003.JPG', 'DSC07673.JPG', 'DSC07693.JPG', 'DSC07709.JPG'],
+            'Cars': ['DSC07926.JPG', 'DSC07897.JPG', 'DSC08003.JPG', 'DSC07673.JPG', 'DSC07693.JPG', 'DSC07709.JPG'],
+            'Experimental': ['DSC07926.JPG', 'DSC07897.JPG', 'DSC08003.JPG', 'DSC07673.JPG', 'DSC07693.JPG', 'DSC07709.JPG'],
+            'Nature': ['IMG_8920.jpg', 'IMG_8975.jpg', 'IMG_9008.jpg', 'IMG_9044.jpg', 'DSC04801.jpg', 'DSC04880.jpg', 'DSC05173.jpg']
+        }
+    };
+    
+    // Return the photos for the specified category and album
+    if (photoCollections[category] && photoCollections[category][album]) {
+        return photoCollections[category][album];
+    }
+    
+    // Return an empty array if the category or album doesn't exist
+    return [];
+}
+
 // Portfolio data structure
 const portfolioData = {
     photojournalism: {
         'Street Stories': {
-            photos: ['DSC02950.jpg', 'DSC02967.jpg', 'DSC02982.jpg', 'DSC03056.jpg', 'warsaw-1418.jpg', 'warsaw-1449.jpg']
+            photos: getPhotosFromFolder('photojournalism', 'Street Stories')
         },
         'Eastern Europe': {
-            photos: ['DSC03078.jpg', 'DSC03094.jpg', 'DSC03161.jpg', 'DSC03558.jpg', 'DSC03632.jpg']
+            photos: getPhotosFromFolder('photojournalism', 'Eastern Europe')
         },
         'The People': {
-            photos: ['DSC02950.jpg', 'DSC02967.jpg', 'DSC02982.jpg', 'DSC03056.jpg', 'warsaw-1418.jpg', 'warsaw-1449.jpg']
+            photos: getPhotosFromFolder('photojournalism', 'The People')
         }
     },
     portraits: {
         'Commissions': {
-            photos: ['DSC01486.jpg', 'DSC01497.jpg', 'DSC01512.jpg', 'DSC01576.jpg', '_MG_4667.jpg', '_MG_4669.jpg']
+            photos: getPhotosFromFolder('portraits', 'Commissions')
         },
         'Friends & Family': {
-            photos: ['DSC00533.jpg', 'DSC00559.jpg', 'DSC00582.jpg', 'DSC00622.jpg', 'IMG_3600-v2.jpg', 'IMG_3624.jpg']
+            photos: getPhotosFromFolder('portraits', 'Friends & Family')
         }
     },
     events: {
         'Public Events': {
-            photos: ['BMW1.jpg', '55-DSC06358.jpg', '57-DSC06368.jpg', '78-DSC06461.jpg', 'DSC06304.jpg', 'DSC06358.jpg', 'DSC06364.jpg', 'DSC06666.jpg']
+            photos: getPhotosFromFolder('events', 'Public Events')
         },
         'Private Events': {
-            photos: ['bday-60th-6.jpg', 'bday-60th-40.jpg', 'DSC07516.jpg', 'DSC07991.JPG', 'DSC07968.JPG']
+            photos: getPhotosFromFolder('events', 'Private Events')
         },
         'Brands': {
-            photos: ['BMW1.jpg', '55-DSC06358.jpg', '57-DSC06368.jpg', '78-DSC06461.jpg', 'DSC06304.jpg', 'DSC06358.jpg', 'DSC06364.jpg', 'DSC06666.jpg']
+            photos: getPhotosFromFolder('events', 'Brands')
         }
     },
     personal: {
         'Travel': {
-            photos: ['DSC07926.JPG', 'DSC07897.JPG', 'DSC08003.JPG', 'DSC07673.JPG', 'DSC07693.JPG', 'DSC07709.JPG']
+            photos: getPhotosFromFolder('personal', 'Travel')
         },
         'Cars': {
-            photos: ['DSC07926.JPG', 'DSC07897.JPG', 'DSC08003.JPG', 'DSC07673.JPG', 'DSC07693.JPG', 'DSC07709.JPG']
+            photos: getPhotosFromFolder('personal', 'Cars')
         },
         'Experimental': {
-            photos: ['DSC07926.JPG', 'DSC07897.JPG', 'DSC08003.JPG', 'DSC07673.JPG', 'DSC07693.JPG', 'DSC07709.JPG']
+            photos: getPhotosFromFolder('personal', 'Experimental')
         },
         'Nature': {
-            photos: ['IMG_8920.jpg', 'IMG_8975.jpg', 'IMG_9008.jpg', 'IMG_9044.jpg', 'DSC04801.jpg', 'DSC04880.jpg', 'DSC05173.jpg']
+            photos: getPhotosFromFolder('personal', 'Nature')
         }
     }
 };
+
+// console.log(portfolioData);
+
+// Portfolio data structure
+// const portfolioData = {
+//     photojournalism: {
+//         'Street Stories': {
+//             photos: ['DSC02950.jpg', 'DSC02967.jpg', 'DSC02982.jpg', 'DSC03056.jpg', 'warsaw-1418.jpg', 'warsaw-1449.jpg']
+//         },
+//         'Eastern Europe': {
+//             photos: ['DSC03078.jpg', 'DSC03094.jpg', 'DSC03161.jpg', 'DSC03558.jpg', 'DSC03632.jpg']
+//         },
+//         'The People': {
+//             photos: ['DSC02950.jpg', 'DSC02967.jpg', 'DSC02982.jpg', 'DSC03056.jpg', 'warsaw-1418.jpg', 'warsaw-1449.jpg']
+//         }
+//     },
+//     portraits: {
+//         'Commissions': {
+//             photos: ['DSC01486.jpg', 'DSC01497.jpg', 'DSC01512.jpg', 'DSC01576.jpg', '_MG_4667.jpg', '_MG_4669.jpg']
+//         },
+//         'Friends & Family': {
+//             photos: ['DSC00533.jpg', 'DSC00559.jpg', 'DSC00582.jpg', 'DSC00622.jpg', 'IMG_3600-v2.jpg', 'IMG_3624.jpg']
+//         }
+//     },
+//     events: {
+//         'Public Events': {
+//             photos: ['BMW1.jpg', '55-DSC06358.jpg', '57-DSC06368.jpg', '78-DSC06461.jpg', 'DSC06304.jpg', 'DSC06358.jpg', 'DSC06364.jpg', 'DSC06666.jpg']
+//         },
+//         'Private Events': {
+//             photos: ['bday-60th-6.jpg', 'bday-60th-40.jpg', 'DSC07516.jpg', 'DSC07991.JPG', 'DSC07968.JPG']
+//         },
+//         'Brands': {
+//             photos: ['BMW1.jpg', '55-DSC06358.jpg', '57-DSC06368.jpg', '78-DSC06461.jpg', 'DSC06304.jpg', 'DSC06358.jpg', 'DSC06364.jpg', 'DSC06666.jpg']
+//         }
+//     },
+//     personal: {
+//         'Travel': {
+//             photos: ['DSC07926.JPG', 'DSC07897.JPG', 'DSC08003.JPG', 'DSC07673.JPG', 'DSC07693.JPG', 'DSC07709.JPG']
+//         },
+//         'Cars': {
+//             photos: ['DSC07926.JPG', 'DSC07897.JPG', 'DSC08003.JPG', 'DSC07673.JPG', 'DSC07693.JPG', 'DSC07709.JPG']
+//         },
+//         'Experimental': {
+//             photos: ['DSC07926.JPG', 'DSC07897.JPG', 'DSC08003.JPG', 'DSC07673.JPG', 'DSC07693.JPG', 'DSC07709.JPG']
+//         },
+//         'Nature': {
+//             photos: ['IMG_8920.jpg', 'IMG_8975.jpg', 'IMG_9008.jpg', 'IMG_9044.jpg', 'DSC04801.jpg', 'DSC04880.jpg', 'DSC05173.jpg']
+//         }
+//     }
+// };
 
 // Initialize portfolio event listeners
 // Polyfill for requestIdleCallback for better browser support
