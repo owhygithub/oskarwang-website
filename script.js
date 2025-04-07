@@ -1,39 +1,42 @@
+// Polyfill for requestIdleCallback for better browser support
+window.requestIdleCallback = window.requestIdleCallback || function(callback) {
+    const start = Date.now();
+    return setTimeout(function() {
+        callback({
+            didTimeout: false,
+            timeRemaining: function() {
+                return Math.max(0, 50 - (Date.now() - start));
+            }
+        });
+    }, 1);
+};
+
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize custom cursor with physics
+    // Initialize custom cursor with highly optimized animation
     const cursor = document.querySelector('.cursor');
     
-    // Physics variables for cursor - optimized for responsiveness
+    // Optimized cursor variables
     let mouseX = 0, mouseY = 0;
     let cursorX = 0, cursorY = 0;
-    let speed = 0.4; // Increased cursor follow speed for better responsiveness
-    let lastMouseX = 0, lastMouseY = 0;
-    let velocityX = 0, velocityY = 0;
+    let speed = 0.12; // Reduced for smoother movement
     
-    // Animation function for cursor with simplified physics
+    // Use a boolean flag for hover state instead of changing properties repeatedly
+    let isHovering = false;
+    
+    // Pre-calculate transform strings for better performance
+    const baseTransform = 'translate(-50%, -50%) rotate(-45deg)';
+    
+    // Optimized animation function using RAF and minimal calculations
     function animateCursor() {
-        // Apply direct easing for more immediate response
-        const easeX = (mouseX - cursorX) * speed;
-        const easeY = (mouseY - cursorY) * speed;
-        
-        // Calculate velocity based on mouse movement with increased sensitivity
-        velocityX = (mouseX - lastMouseX) * 0.08; // Increased sensitivity
-        velocityY = (mouseY - lastMouseY) * 0.08; // Increased sensitivity
-        
-        // Apply velocity with improved physics for better responsiveness
-        cursorX += easeX + velocityX * 0.2; // Increased velocity influence
-        cursorY += easeY + velocityY * 0.2; // Increased velocity influence
-        
-        // Apply less damping to velocity for better responsiveness
-        velocityX *= 0.9; // Reduced damping
-        velocityY *= 0.9; // Reduced damping
-        
-        // Update cursor position
-        cursor.style.left = `${cursorX}px`;
-        cursor.style.top = `${cursorY}px`;
-        
-        // Store last mouse position
-        lastMouseX = mouseX;
-        lastMouseY = mouseY;
+        // Only calculate position when cursor is visible
+        if (cursor.style.opacity !== '0') {
+            // Simple linear interpolation with minimal operations
+            cursorX += (mouseX - cursorX) * speed;
+            cursorY += (mouseY - cursorY) * speed;
+            
+            // Use translate3d for hardware acceleration with minimal string concatenation
+            cursor.style.transform = `translate3d(${cursorX}px, ${cursorY}px, 0) ${baseTransform}`;
+        }
         
         requestAnimationFrame(animateCursor);
     }
@@ -41,102 +44,150 @@ document.addEventListener('DOMContentLoaded', () => {
     // Start animation loop
     requestAnimationFrame(animateCursor);
     
-    // Update mouse position
-    document.addEventListener('mousemove', (e) => {
+    // Use pointer events for better performance across devices
+    document.addEventListener('pointermove', (e) => {
+        // Direct assignment without throttling for smoother movement
+        // Modern browsers optimize RAF internally
         mouseX = e.clientX;
         mouseY = e.clientY;
-        cursor.style.opacity = '1';
-    });
+        
+        // Only update opacity if needed
+        if (cursor.style.opacity !== '1') {
+            cursor.style.opacity = '1';
+        }
+    }, { passive: true }); // Use passive listener for better performance
     
     // Hide cursor when mouse leaves the window
-    document.addEventListener('mouseleave', () => {
+    document.addEventListener('pointerleave', () => {
         cursor.style.opacity = '0';
     });
     
     // Show cursor when mouse enters the window
-    document.addEventListener('mouseenter', () => {
+    document.addEventListener('pointerenter', () => {
         cursor.style.opacity = '1';
-        // Reset physics when mouse re-enters
+        // Reset cursor position to current mouse position for immediate response
         cursorX = mouseX;
         cursorY = mouseY;
-        velocityX = 0;
-        velocityY = 0;
     });
     
-    // Add hover effects for interactive elements
-    document.querySelectorAll('a, button, .nav-btn, .portfolio-item img, .back-btn').forEach(item => {
-        item.addEventListener('mouseenter', () => {
-            cursor.style.transform = 'translate(-50%, -50%) scale(1.5) rotate(-45deg)';
+    // Use event delegation for hover effects instead of attaching to each element
+    document.addEventListener('mouseover', (e) => {
+        const target = e.target;
+        // Check if the target is an interactive element
+        if (target.matches('a, button, .nav-btn, .portfolio-item img, .back-btn, .portfolio-category, .portfolio-album')) {
             cursor.style.borderBottomColor = '#ffffff';
-            // Add magnetic effect with faster response
-            speed = 0.5; // Increased from 0.4 for even faster response on hover
-        });
-        
-        item.addEventListener('mouseleave', () => {
-            cursor.style.transform = 'translate(-50%, -50%) rotate(-45deg)';
+            isHovering = true;
+            speed = 0.25; // Slightly faster on hover for better responsiveness
+        }
+    }, { passive: true });
+    
+    document.addEventListener('mouseout', (e) => {
+        const target = e.target;
+        if (target.matches('a, button, .nav-btn, .portfolio-item img, .back-btn, .portfolio-category, .portfolio-album')) {
             cursor.style.borderBottomColor = '#ffea00';
-            // Reset speed to optimized value
-            speed = 0.4; // Updated to match our new base speed
-        });
+            isHovering = false;
+            speed = 0.12; // Return to normal speed
+        }
+    }, { passive: true });
 
-        
-        // Add ripple effect on click
-        item.addEventListener('mousedown', function(e) {
-            if (this.classList.contains('nav-btn') || this.tagName === 'BUTTON' || this.tagName === 'A') {
-                const ripple = document.createElement('span');
-                const rect = this.getBoundingClientRect();
-                const size = Math.max(rect.width, rect.height);
-                const x = e.clientX - rect.left - size / 2;
-                const y = e.clientY - rect.top - size / 2;
-                
-                ripple.style.cssText = `
-                    position: absolute;
-                    top: ${y}px;
-                    left: ${x}px;
-                    width: ${size}px;
-                    height: ${size}px;
-                    background: rgba(255, 255, 255, 0.1);
-                    border-radius: 50%;
-                    transform: scale(0);
-                    animation: ripple 0.6s linear;
-                    pointer-events: none;
-                    z-index: 0;
-                `;
-                
-                this.style.position = this.style.position || 'relative';
-                this.style.overflow = 'hidden';
-                this.appendChild(ripple);
-                
+    });
+    
+    // Optimized ripple effect using event delegation
+    document.addEventListener('mousedown', function(e) {
+        const target = e.target;
+        if (target.classList.contains('nav-btn') || target.tagName === 'BUTTON' || target.tagName === 'A') {
+            // Skip ripple effect for performance if device might be low-powered
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                return;
+            }
+            
+            const ripple = document.createElement('span');
+            const rect = target.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            const x = e.clientX - rect.left - size / 2;
+            const y = e.clientY - rect.top - size / 2;
+            
+            // Use a simpler ripple effect with fewer properties
+            ripple.style.cssText = `
+                position: absolute;
+                top: ${y}px;
+                left: ${x}px;
+                width: ${size}px;
+                height: ${size}px;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 50%;
+                transform: scale(0);
+                animation: ripple 0.6s linear;
+                pointer-events: none;
+                z-index: 0;
+            `;
+            
+            // Only set these styles if not already set
+            if (!target.style.position) target.style.position = 'relative';
+            if (!target.style.overflow) target.style.overflow = 'hidden';
+            
+            target.appendChild(ripple);
+            
+            // Use requestAnimationFrame for cleanup to avoid layout thrashing
+            requestAnimationFrame(() => {
                 setTimeout(() => {
                     ripple.remove();
                 }, 600);
-            }
-        });
-    });
+            });
+        }
+    }, { passive: true });
     
-    // Initialize lazy loading
+    // Optimized lazy loading with better performance characteristics
     const lazyImages = document.querySelectorAll('.lazy-load');
+    
+    // Use more efficient IntersectionObserver options
     const imageObserver = new IntersectionObserver((entries, observer) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const img = entry.target;
-                img.src = img.dataset.src;
-                img.classList.add('loaded');
-                observer.unobserve(img);
-            }
-        });
+        // Process all entries in a single RAF call to avoid layout thrashing
+        if (entries.length) {
+            requestAnimationFrame(() => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        
+                        // Create a new image to preload without affecting page layout
+                        const tempImage = new Image();
+                        tempImage.onload = () => {
+                            // Only update the DOM after image is loaded
+                            img.src = img.dataset.src;
+                            img.classList.add('loaded');
+                        };
+                        tempImage.src = img.dataset.src;
+                        
+                        observer.unobserve(img);
+                    }
+                });
+            });
+        }
+    }, {
+        rootMargin: '200px 0px', // Load images before they appear in viewport
+        threshold: 0.01 // Trigger with minimal visibility
     });
 
-    lazyImages.forEach(image => {
-        imageObserver.observe(image);
-    });
+    // Observe images in batches to avoid performance spikes
+    if (lazyImages.length > 0) {
+        requestIdleCallback(() => {
+            lazyImages.forEach(image => {
+                imageObserver.observe(image);
+            });
+        }, { timeout: 1000 });
+    }
 
     // Handle initial page load
     const hash = window.location.hash.replace('#', '');
     if (hash && document.querySelector(`.${hash}-page`)) {
         showPage(hash);
     }
-});
+
+
+// Track navigation state
+let currentCategory = '';
+let currentAlbum = '';
+let navigationStack = [];
 
 function showPage(page) {
     const backBtn = document.querySelector('.back-btn');
@@ -156,6 +207,10 @@ function showPage(page) {
 
     if (page === 'portfolio') {
         document.querySelector('.main-page').classList.add('active-page');
+        // Reset portfolio navigation when showing main portfolio page
+        currentCategory = '';
+        currentAlbum = '';
+        navigationStack = ['main', 'portfolio'];
     }
     
     targetPage.classList.add('active-page');
@@ -164,9 +219,15 @@ function showPage(page) {
     if (page === 'main') {
         backBtn.classList.remove('visible');
         history.replaceState({ page }, document.title, window.location.pathname);
+        navigationStack = [];
     } else {
         backBtn.classList.add('visible');
         history.pushState({ page }, document.title, `#${page}`);
+        
+        // Add to navigation stack if not already there
+        if (!navigationStack.includes(page)) {
+            navigationStack.push(page);
+        }
     }
 }
 
@@ -178,318 +239,332 @@ function redirectToShop() {
 
 // Add click handler for back button
 document.querySelector('.back-btn').addEventListener('click', () => {
-    showPage('main');
+    // Use our goBack function to navigate through the hierarchy
+    goBack();
 });
 
-
-// Scroll Gallery functionality
-let currentImageIndex = 0;
-let images = [
-    // Load all images from the images folder
-    '081.jpg', '167.jpg', '49FF53E2-8B17-405D-A21B-849B0275D93B.jpg', '55-DSC06358.jpg',
-    '57-DSC06368.jpg', '6.jpg', '78-DSC06461.jpg', 'BMW1.jpg', 'DSC00533.jpg',
-    'DSC00559.jpg', 'DSC00582.jpg', 'DSC00622.jpg', 'DSC00888.JPG', 'DSC01128.jpg',
-    'DSC01486.jpg', 'DSC01497.jpg', 'DSC01512.jpg', 'DSC01576.jpg',
-    'DSC02893.jpg', 'DSC02923.jpg', 'DSC02950.jpg', 'DSC02967.jpg', 'DSC02982.jpg',
-    'DSC03056.jpg', 'DSC03078.jpg', 'DSC03094.jpg', 'DSC03161.jpg', 'DSC03558.jpg',
-    'DSC03632.jpg', 'DSC04801.jpg', 'DSC04880.jpg', 'DSC05173.jpg', 'DSC06304.jpg',
-    'DSC06358.jpg', 'DSC06364.jpg', 'DSC06666.jpg', 'DSC07516.jpg', 'IMG_3600-v2.jpg',
-    'IMG_3624.jpg', 'IMG_8920.jpg', 'IMG_8975.jpg', 'IMG_9008.jpg', 'IMG_9044.jpg',
-    '_MG_4667.jpg', '_MG_4669.jpg', 'bday-60th-40.jpg',
-    'bday-60th-6.jpg', 'edit4.jpg', 'warsaw-1418.jpg', 'warsaw-1449.jpg', 'DSC08003.JPG',
-    'DSC07991.JPG', 'DSC07968.JPG', 'DSC07926.JPG', 'DSC07897.JPG'
-    , 'DSC07874.JPG'
-    , 'DSC07839.JPG'
-    , 'DSC07825.JPG'
-    , 'DSC07709.JPG'
-    , 'DSC07693.JPG'
-    , 'DSC07673.JPG'
-    , 'DSC07454.JPG'
-    , 'DSC07065.JPG'
-];
-let isScrolling = false;
-let scrollTimeout;
-
-// Initialize the scroll gallery when the portfolio page is shown
-function initScrollGallery() {
-    // Reset current image index
-    currentImageIndex = 0;
+// Portfolio navigation functions
+function showAlbumsForCategory(category) {
+    currentCategory = category;
+    const albumsGrid = document.querySelector('.albums-grid');
+    const categoryTitle = document.querySelector('.album-category-title');
     
-    // Shuffle the images array for random order
-    shuffleArray(images);
+    // Update the title
+    categoryTitle.textContent = category.charAt(0).toUpperCase() + category.slice(1);
     
-    // Display the first image
-    updateGalleryImage();
+    // Clear existing albums
+    albumsGrid.innerHTML = '';
     
-    // Set up automatic slideshow
-    startSlideshow();
+    // Get albums for this category
+    const categoryAlbums = portfolioData[category];
     
-    // Add scroll event listener to the gallery container
-    const galleryContainer = document.querySelector('.gallery-container');
-    if (galleryContainer) {
-        // Use wheel event for more precise scroll detection
-        galleryContainer.addEventListener('wheel', handleGalleryScroll);
+    // Create album elements
+    Object.keys(categoryAlbums).forEach(albumName => {
+        const album = categoryAlbums[albumName];
+        const coverImage = album.photos[0]; // Use first photo as cover
         
-        // Add touch events for mobile
-        galleryContainer.addEventListener('touchstart', handleTouchStart, false);
-        galleryContainer.addEventListener('touchmove', handleTouchMove, false);
-    }
-}
-
-// Function to shuffle array (Fisher-Yates algorithm)
-function shuffleArray(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
-}
-
-// Handle scroll events in the gallery
-function handleGalleryScroll(event) {
-    // Prevent default scroll behavior
-    event.preventDefault();
-    
-    // If already scrolling, return
-    if (isScrolling) return;
-    
-    // Stop automatic slideshow when user interacts
-    stopSlideshow();
-    
-    // Set scrolling flag
-    isScrolling = true;
-    
-    // Determine scroll direction
-    const direction = event.deltaY > 0 ? 1 : -1;
-    
-    // Update current image index based on direction
-    currentImageIndex = (currentImageIndex + direction + images.length) % images.length;
-    
-    // Update the gallery image
-    updateGalleryImage();
-    
-    // Reset scrolling flag after animation completes
-    clearTimeout(scrollTimeout);
-    scrollTimeout = setTimeout(() => {
-        isScrolling = false;
-        // Restart slideshow after user interaction
-        startSlideshow();
-    }, 1000); // Match this to the CSS transition duration
-}
-
-// Variables for touch events
-let touchStartY = 0;
-
-// Handle touch start event
-function handleTouchStart(event) {
-    touchStartY = event.touches[0].clientY;
-}
-
-// Handle touch move event
-function handleTouchMove(event) {
-    if (!touchStartY || isScrolling) return;
-    
-    const touchEndY = event.touches[0].clientY;
-    const diff = touchStartY - touchEndY;
-    
-    // If significant vertical swipe detected
-    if (Math.abs(diff) > 50) {
-        // Stop automatic slideshow when user interacts
-        stopSlideshow();
+        const albumElement = document.createElement('div');
+        albumElement.className = 'portfolio-album';
+        albumElement.setAttribute('data-album', albumName);
         
-        // Set scrolling flag
-        isScrolling = true;
+        albumElement.innerHTML = `
+            <div class="album-overlay">
+                <h3>${albumName}</h3>
+            </div>
+            <img src="images/${coverImage}" alt="${albumName}" class="album-image">
+        `;
         
-        // Determine direction (positive = down, negative = up)
-        const direction = diff > 0 ? 1 : -1;
-        
-        // Update current image index based on direction
-        currentImageIndex = (currentImageIndex + direction + images.length) % images.length;
-        
-        // Update the gallery image
-        updateGalleryImage();
-        
-        // Reset touch start position
-        touchStartY = 0;
-        
-        // Reset scrolling flag after animation completes
-        clearTimeout(scrollTimeout);
-        scrollTimeout = setTimeout(() => {
-            isScrolling = false;
-            // Restart slideshow after user interaction
-            startSlideshow();
-        }, 1000); // Match this to the CSS transition duration
-    }
-}
-
-// Update the gallery image based on current index
-function updateGalleryImage() {
-    const galleryContainer = document.querySelector('.gallery-container');
-    if (!galleryContainer) return;
-    
-    // Remove active class from all items
-    const items = document.querySelectorAll('.gallery-item');
-    items.forEach(item => item.classList.remove('active'));
-    
-    // Create new gallery item
-    const newItem = document.createElement('div');
-    newItem.className = 'gallery-item';
-    
-    // Create image element
-    const img = document.createElement('img');
-    img.src = `images/${images[currentImageIndex]}`;
-    img.alt = `Gallery Photo ${currentImageIndex + 1}`;
-    img.className = 'gallery-image';
-    
-    // Add image to item
-    newItem.appendChild(img);
-    
-    // Add item to container
-    galleryContainer.appendChild(newItem);
-    
-    // Force reflow before adding active class for transition
-    void newItem.offsetWidth;
-    
-    // Add active class to trigger transition
-    newItem.classList.add('active');
-    
-    // Remove old items after transition
-    setTimeout(() => {
-        items.forEach(item => {
-            if (item !== newItem) {
-                galleryContainer.removeChild(item);
-            }
+        albumElement.addEventListener('click', () => {
+            showPhotosForAlbum(category, albumName);
         });
-    }, 1000); // Match this to the CSS transition duration
-}
-
-// Modify showPage function to initialize scroll gallery when portfolio page is shown
-function showPage(page) {
-    const backBtn = document.querySelector('.back-btn');
+        
+        albumsGrid.appendChild(albumElement);
+    });
+    
+    // Show the albums page
     const allPages = document.querySelectorAll('.page');
-    
-    // Stop slideshow if it's running
-    if (slideshowTimer) {
-        stopSlideshow();
-    }
-    
-    // Hide all pages first
     allPages.forEach(element => {
         element.classList.remove('active-page');
     });
-
-    const targetPage = document.querySelector(`.${page}-page`);
+    document.querySelector('.portfolio-albums-page').classList.add('active-page');
     
-    // For overlay pages (like contact), don't hide the main page
-    if (page === 'contact') {
-        document.querySelector('.main-page').classList.add('active-page');
-    }
-
-    if (page === 'portfolio') {
-        document.querySelector('.main-page').classList.add('active-page');
-        // Initialize scroll gallery when portfolio page is shown
-        initScrollGallery();
-    }
-    
-    targetPage.classList.add('active-page');
-
-    // Toggle back button visibility and functionality
-    if (page === 'main') {
-        backBtn.classList.remove('visible');
-        history.replaceState({ page }, document.title, window.location.pathname);
-    } else {
-        backBtn.classList.add('visible');
-        history.pushState({ page }, document.title, `#${page}`);
+    // Update navigation
+    if (navigationStack[navigationStack.length - 1] !== 'portfolio-albums') {
+        navigationStack.push('portfolio-albums');
     }
 }
 
-// Lightbox functionality
-document.addEventListener('click', (e) => {
-    if (e.target.classList.contains('gallery-image')) {
-        const lightbox = document.createElement('div');
-        lightbox.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0,0,0,0.9);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            z-index: 1000;
+function showPhotosForAlbum(category, album) {
+    currentAlbum = album;
+    const photosContainer = document.querySelector('.photos-container');
+    const albumTitle = document.querySelector('.album-title');
+    
+    // Update the title
+    albumTitle.textContent = album;
+    
+    // Clear existing photos
+    photosContainer.innerHTML = '';
+    
+    // Get photos for this album
+    const albumPhotos = portfolioData[category][album].photos;
+    
+    // Create photo elements
+    albumPhotos.forEach(photo => {
+        const photoElement = document.createElement('div');
+        photoElement.className = 'photo-item';
+        
+        photoElement.innerHTML = `
+            <img src="images/${photo}" alt="${album} photo" class="photo-image">
         `;
         
-        const fullImg = document.createElement('img');
-        fullImg.src = e.target.src;
-        fullImg.style.maxWidth = '90%';
-        fullImg.style.maxHeight = '90%';
-        
-        lightbox.appendChild(fullImg);
-        document.body.appendChild(lightbox);
-        
-        lightbox.addEventListener('click', () => {
-            document.body.removeChild(lightbox);
+        photosContainer.appendChild(photoElement);
+    });
+    
+    // Show the photos page
+    const allPages = document.querySelectorAll('.page');
+    allPages.forEach(element => {
+        element.classList.remove('active-page');
+    });
+    document.querySelector('.portfolio-photos-page').classList.add('active-page');
+    
+    // Update navigation
+    if (navigationStack[navigationStack.length - 1] !== 'portfolio-photos') {
+        navigationStack.push('portfolio-photos');
+    }
+}
+
+
+// Portfolio data structure
+const portfolioData = {
+    photojournalism: {
+        'Street Stories': {
+            photos: ['DSC02950.jpg', 'DSC02967.jpg', 'DSC02982.jpg', 'DSC03056.jpg', 'warsaw-1418.jpg', 'warsaw-1449.jpg']
+        },
+        'Eastern Europe': {
+            photos: ['DSC03078.jpg', 'DSC03094.jpg', 'DSC03161.jpg', 'DSC03558.jpg', 'DSC03632.jpg']
+        },
+        'The People': {
+            photos: ['DSC02950.jpg', 'DSC02967.jpg', 'DSC02982.jpg', 'DSC03056.jpg', 'warsaw-1418.jpg', 'warsaw-1449.jpg']
+        }
+    },
+    portraits: {
+        'Commissions': {
+            photos: ['DSC01486.jpg', 'DSC01497.jpg', 'DSC01512.jpg', 'DSC01576.jpg', '_MG_4667.jpg', '_MG_4669.jpg']
+        },
+        'Friends & Family': {
+            photos: ['DSC00533.jpg', 'DSC00559.jpg', 'DSC00582.jpg', 'DSC00622.jpg', 'IMG_3600-v2.jpg', 'IMG_3624.jpg']
+        }
+    },
+    events: {
+        'Public Events': {
+            photos: ['BMW1.jpg', '55-DSC06358.jpg', '57-DSC06368.jpg', '78-DSC06461.jpg', 'DSC06304.jpg', 'DSC06358.jpg', 'DSC06364.jpg', 'DSC06666.jpg']
+        },
+        'Private Events': {
+            photos: ['bday-60th-6.jpg', 'bday-60th-40.jpg', 'DSC07516.jpg', 'DSC07991.JPG', 'DSC07968.JPG']
+        },
+        'Brands': {
+            photos: ['BMW1.jpg', '55-DSC06358.jpg', '57-DSC06368.jpg', '78-DSC06461.jpg', 'DSC06304.jpg', 'DSC06358.jpg', 'DSC06364.jpg', 'DSC06666.jpg']
+        }
+    },
+    personal: {
+        'Travel': {
+            photos: ['DSC07926.JPG', 'DSC07897.JPG', 'DSC08003.JPG', 'DSC07673.JPG', 'DSC07693.JPG', 'DSC07709.JPG']
+        },
+        'Cars': {
+            photos: ['DSC07926.JPG', 'DSC07897.JPG', 'DSC08003.JPG', 'DSC07673.JPG', 'DSC07693.JPG', 'DSC07709.JPG']
+        },
+        'Experimental': {
+            photos: ['DSC07926.JPG', 'DSC07897.JPG', 'DSC08003.JPG', 'DSC07673.JPG', 'DSC07693.JPG', 'DSC07709.JPG']
+        },
+        'Nature': {
+            photos: ['IMG_8920.jpg', 'IMG_8975.jpg', 'IMG_9008.jpg', 'IMG_9044.jpg', 'DSC04801.jpg', 'DSC04880.jpg', 'DSC05173.jpg']
+        }
+    }
+};
+
+// Initialize portfolio event listeners
+// Polyfill for requestIdleCallback for better browser support
+window.requestIdleCallback = window.requestIdleCallback || function(callback) {
+    const start = Date.now();
+    return setTimeout(function() {
+        callback({
+            didTimeout: false,
+            timeRemaining: function() {
+                return Math.max(0, 50 - (Date.now() - start));
+            }
         });
+    }, 1);
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Add event listeners to category elements
+    document.querySelectorAll('.portfolio-category').forEach(category => {
+        category.addEventListener('click', () => {
+            const categoryName = category.getAttribute('data-category');
+            showAlbumsForCategory(categoryName);
+        });
+    });
+});
+
+// Initialize preloader
+// Polyfill for requestIdleCallback for better browser support
+window.requestIdleCallback = window.requestIdleCallback || function(callback) {
+    const start = Date.now();
+    return setTimeout(function() {
+        callback({
+            didTimeout: false,
+            timeRemaining: function() {
+                return Math.max(0, 50 - (Date.now() - start));
+            }
+        });
+    }, 1);
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Hide preloader when page is loaded
+    window.addEventListener('load', () => {
+        const preloader = document.querySelector('.preloader');
+        preloader.style.opacity = '0';
+        setTimeout(() => {
+            preloader.style.display = 'none';
+        }, 500);
+    });
+});
+
+// Handle window popstate for browser back button
+window.addEventListener('popstate', (event) => {
+    if (event.state && event.state.page) {
+        showPage(event.state.page);
+    } else {
+        showPage('main');
     }
 });
 
-// Preloader
-window.addEventListener('load', () => {
-    document.querySelector('.preloader').style.opacity = '0';
-    setTimeout(() => {
-        document.querySelector('.preloader').remove();
-    }, 500);
-});
-
-// Add parallax effect to main page background
-document.addEventListener('mousemove', (e) => {
-    if (document.querySelector('.main-page.active-page')) {
-        const mainPage = document.querySelector('.main-page');
-        const moveX = (e.clientX - window.innerWidth / 2) * 0.01;
-        const moveY = (e.clientY - window.innerHeight / 2) * 0.01;
-        
-        mainPage.style.backgroundPosition = `calc(50% + ${moveX}px) calc(50% + ${moveY}px)`;
-        mainPage.style.transition = 'background-position 0.3s ease-out';
-    }
-});
-
-// Slideshow timer variable
-let slideshowTimer;
-
-// Function to start automatic slideshow
-function startSlideshow() {
-    // Clear any existing timer
-    if (slideshowTimer) {
-        clearInterval(slideshowTimer);
+// Additional portfolio navigation helpers
+function goBack() {
+    if (navigationStack.length <= 1) {
+        showPage('main');
+        return;
     }
     
-    // Set interval to change image every 5 seconds
-    slideshowTimer = setInterval(() => {
-        // Only proceed if not currently scrolling
-        if (!isScrolling) {
-            // Set scrolling flag to prevent user scrolling during transition
-            isScrolling = true;
-            
-            // Move to next image
-            currentImageIndex = (currentImageIndex + 1) % images.length;
-            
-            // Update the gallery image
-            updateGalleryImage();
-            
-            // Reset scrolling flag after animation completes
-            setTimeout(() => {
-                isScrolling = false;
-            }, 1000); // Match this to the CSS transition duration
-        }
-    }, 5000); // Change image every 5 seconds
-}
-
-// Function to stop slideshow (called when user interacts with gallery)
-function stopSlideshow() {
-    if (slideshowTimer) {
-        clearInterval(slideshowTimer);
-        slideshowTimer = null;
+    // Remove current page from stack
+    navigationStack.pop();
+    
+    // Go to previous page
+    const previousPage = navigationStack[navigationStack.length - 1];
+    
+    if (previousPage === 'portfolio') {
+        showPage('portfolio');
+    } else if (previousPage === 'portfolio-albums') {
+        showAlbumsForCategory(currentCategory);
+    } else if (previousPage === 'portfolio-photos') {
+        showPhotosForAlbum(currentCategory, currentAlbum);
+    } else {
+        showPage(previousPage);
     }
 }
+
+// Optimized lightbox functionality for portfolio photos
+(function() {
+    // Create lightbox elements once and reuse them
+    const lightbox = document.createElement('div');
+    lightbox.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0,0,0,0.9);
+        display: none; /* Hidden by default */
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    `;
+    
+    const fullImg = document.createElement('img');
+    fullImg.style.maxWidth = '90%';
+    fullImg.style.maxHeight = '90%';
+    fullImg.style.transform = 'scale(0.95)';
+    fullImg.style.transition = 'transform 0.2s ease';
+    
+    lightbox.appendChild(fullImg);
+    document.body.appendChild(lightbox);
+    
+    // Show lightbox function with optimized animation
+    function showLightbox(imgSrc) {
+        fullImg.src = imgSrc;
+        lightbox.style.display = 'flex';
+        
+        // Force reflow before starting animation
+        void lightbox.offsetWidth;
+        
+        lightbox.style.opacity = '1';
+        fullImg.style.transform = 'scale(1)';
+    }
+    
+    // Hide lightbox function with optimized animation
+    function hideLightbox() {
+        lightbox.style.opacity = '0';
+        fullImg.style.transform = 'scale(0.95)';
+        
+        setTimeout(() => {
+            lightbox.style.display = 'none';
+        }, 200);
+    }
+    
+    // Event delegation for better performance
+    document.addEventListener('click', (e) => {
+        // Check if clicking on an image
+        if (e.target.classList.contains('photo-image') || e.target.classList.contains('album-image') || e.target.classList.contains('category-image')) {
+            // Don't show lightbox if clicking on category or album (they navigate instead)
+            if ((e.target.classList.contains('category-image') && e.target.closest('.portfolio-category')) ||
+                (e.target.classList.contains('album-image') && e.target.closest('.portfolio-album'))) {
+                return;
+            }
+            
+            showLightbox(e.target.src);
+        }
+        
+        // Check if clicking on the lightbox to close it
+        if (e.target === lightbox || e.target === fullImg) {
+            hideLightbox();
+        }
+    }, { passive: true });
+    
+    // Close lightbox with escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && lightbox.style.display === 'flex') {
+            hideLightbox();
+        }
+    });
+})();
+
+// Optimized parallax effect with throttling and RAF
+(function() {
+    let ticking = false;
+    let lastMouseX = 0;
+    let lastMouseY = 0;
+    const parallaxFactor = 0.005; // Reduced factor for better performance
+    
+    document.addEventListener('mousemove', (e) => {
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+        
+        if (!ticking) {
+            requestAnimationFrame(() => {
+                if (document.querySelector('.main-page.active-page')) {
+                    const mainPage = document.querySelector('.main-page');
+                    const moveX = (lastMouseX - window.innerWidth / 2) * parallaxFactor;
+                    const moveY = (lastMouseY - window.innerHeight / 2) * parallaxFactor;
+                    
+                    mainPage.style.backgroundPosition = `calc(50% + ${moveX}px) calc(50% + ${moveY}px)`;
+                }
+                ticking = false;
+            });
+            ticking = true;
+        }
+    }, { passive: true });
+})();
