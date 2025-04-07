@@ -339,40 +339,34 @@ function showPhotosForAlbum(category, album) {
 }
 
 
-// Helper function to get image files from a folder - browser compatible version
-function getPhotosFromFolder(category, album) {
-    // This is a browser-compatible replacement for the Node.js file system operations
-    // It returns hardcoded arrays based on the category and album
-    const photoCollections = {
-        photojournalism: {
-            'Street Stories': ['DSC02950.jpg', 'DSC02967.jpg', 'DSC02982.jpg', 'DSC03056.jpg', 'warsaw-1418.jpg', 'warsaw-1449.jpg'],
-            'Eastern Europe': ['DSC03078.jpg', 'DSC03094.jpg', 'DSC03161.jpg', 'DSC03558.jpg', 'DSC03632.jpg'],
-            'The People': ['DSC02950.jpg', 'DSC02967.jpg', 'DSC02982.jpg', 'DSC03056.jpg', 'warsaw-1418.jpg', 'warsaw-1449.jpg']
-        },
-        portraits: {
-            'Commissions': ['DSC01486.jpg', 'DSC01497.jpg', 'DSC01512.jpg', 'DSC01576.jpg', '_MG_4667.jpg', '_MG_4669.jpg'],
-            'Friends & Family': ['DSC00533.jpg', 'DSC00559.jpg', 'DSC00582.jpg', 'DSC00622.jpg', 'IMG_3600-v2.jpg', 'IMG_3624.jpg']
-        },
-        events: {
-            'Public Events': ['BMW1.jpg', '55-DSC06358.jpg', '57-DSC06368.jpg', '78-DSC06461.jpg', 'DSC06304.jpg', 'DSC06358.jpg', 'DSC06364.jpg', 'DSC06666.jpg'],
-            'Private Events': ['bday-60th-6.jpg', 'bday-60th-40.jpg', 'DSC07516.jpg', 'DSC07991.JPG', 'DSC07968.JPG'],
-            'Brands': ['BMW1.jpg', '55-DSC06358.jpg', '57-DSC06368.jpg', '78-DSC06461.jpg', 'DSC06304.jpg', 'DSC06358.jpg', 'DSC06364.jpg', 'DSC06666.jpg']
-        },
-        personal: {
-            'Travel': ['DSC07926.JPG', 'DSC07897.JPG', 'DSC08003.JPG', 'DSC07673.JPG', 'DSC07693.JPG', 'DSC07709.JPG'],
-            'Cars': ['DSC07926.JPG', 'DSC07897.JPG', 'DSC08003.JPG', 'DSC07673.JPG', 'DSC07693.JPG', 'DSC07709.JPG'],
-            'Experimental': ['DSC07926.JPG', 'DSC07897.JPG', 'DSC08003.JPG', 'DSC07673.JPG', 'DSC07693.JPG', 'DSC07709.JPG'],
-            'Nature': ['IMG_8920.jpg', 'IMG_8975.jpg', 'IMG_9008.jpg', 'IMG_9044.jpg', 'DSC04801.jpg', 'DSC04880.jpg', 'DSC05173.jpg']
-        }
-    };
-    
-    // Return the photos for the specified category and album
-    if (photoCollections[category] && photoCollections[category][album]) {
-        return photoCollections[category][album];
+const fs = require('fs');
+const path = require('path');
+
+// Helper function to get image files from a folder
+function getPhotosFromFolder(folderPath) {
+    const files = fs.readdirSync(folderPath); // Read folder content
+    return files.filter(file => file.match(/\.(jpg|jpeg|png|gif)$/i)); // Filter image files
+}
+
+// Folder paths for each category
+const directories = {
+    'photojournalism': {
+        'Street Stories': path.join(__dirname, 'photojournalism', 'street_stories'),
+        'Eastern Europe': path.join(__dirname, 'photojournalism', 'eastern_europe'),
+        'The People': path.join(__dirname, 'photojournalism', 'the_people')
+    },
+    'portraits': {
+        'Commissions': path.join(__dirname, 'portraits', 'commissions'),
+        'Friends & Family': path.join(__dirname, 'portraits', 'friends_and_family')
+    },
+    'events': {
+        'Public Events': path.join(__dirname, 'events', 'public_events'),
+        'Private Events': path.join(__dirname, 'events', 'private_events'),
+        'Brands': path.join(__dirname, 'events', 'brands')
+    },
+    'personal': {
+        'Travel': path.join(__dirname, 'personal', 'travel'),
     }
-    
-    // Return an empty array if the category or album doesn't exist
-    return [];
 }
 
 // Portfolio data structure
