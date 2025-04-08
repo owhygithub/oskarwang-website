@@ -265,8 +265,15 @@ function showAlbumsForCategory(category) {
     
     // Create album elements
     Object.keys(categoryAlbums).forEach(albumName => {
-        const album = categoryAlbums[albumName];
-        const coverImage = album.photos[0]; // Use first photo as cover
+        // Get photos for this album
+        const photos = getPhotosFromFolder(category, albumName);
+        if (photos.length === 0) {
+            console.warn(`No photos found for ${category}/${albumName}`);
+            return; // Skip this album if no photos
+        }
+        
+        const coverImage = photos[0]; // Use first photo as cover
+        const albumDir = albumName.toLowerCase().replace(/ /g, '_').replace(/&/g, 'and');
         
         const albumElement = document.createElement('div');
         albumElement.className = 'portfolio-album';
@@ -276,7 +283,7 @@ function showAlbumsForCategory(category) {
             <div class="album-overlay">
                 <h3>${albumName}</h3>
             </div>
-            <img src="images/${coverImage}" alt="${albumName}" class="album-image">
+            <img src="images/${category}/${albumDir}/${coverImage}" alt="${albumName}" class="album-image">
         `;
         
         albumElement.addEventListener('click', () => {
@@ -285,6 +292,11 @@ function showAlbumsForCategory(category) {
         
         albumsGrid.appendChild(albumElement);
     });
+    
+    // If no albums were added, show an error message
+    if (albumsGrid.children.length === 0) {
+        albumsGrid.innerHTML = '<div class="error-message">No albums found for this category.</div>';
+    }
     
     // Show the albums page
     const allPages = document.querySelectorAll('.page');
@@ -310,19 +322,39 @@ function showPhotosForAlbum(category, album) {
     // Clear existing photos
     photosContainer.innerHTML = '';
     
-    // Get photos for this album
-    const albumPhotos = portfolioData[category][album].photos;
+    // Show loading indicator
+    const loadingElement = document.createElement('div');
+    loadingElement.className = 'loading-indicator';
+    loadingElement.textContent = 'Loading photos...';
+    photosContainer.appendChild(loadingElement);
     
-    // Create photo elements
-    albumPhotos.forEach(photo => {
-        const photoElement = document.createElement('div');
-        photoElement.className = 'photo-item';
+    // Get photos for this album asynchronously
+    getPhotosFromFolder(category, album).then(photos => {
+        // Remove loading indicator
+        photosContainer.innerHTML = '';
         
-        photoElement.innerHTML = `
-            <img src="images/${photo}" alt="${album} photo" class="photo-image">
-        `;
+        // Create photo elements
+        if (photos.length === 0) {
+            photosContainer.innerHTML = '<div class="error-message">No photos found in this album.</div>';
+            return;
+        }
         
-        photosContainer.appendChild(photoElement);
+        // Map album name to directory name
+        const albumDir = album.toLowerCase().replace(/ /g, '_').replace(/&/g, 'and');
+        
+        photos.forEach(photo => {
+            const photoElement = document.createElement('div');
+            photoElement.className = 'photo-item';
+            
+            photoElement.innerHTML = `
+                <img src="images/${category}/${albumDir}/${photo}" alt="${album} photo" class="photo-image">
+            `;
+            
+            photosContainer.appendChild(photoElement);
+        });
+    }).catch(error => {
+        console.error('Error loading photos:', error);
+        photosContainer.innerHTML = '<div class="error-message">Error loading photos. Please try again later.</div>';
     });
     
     // Show the photos page
@@ -339,81 +371,125 @@ function showPhotosForAlbum(category, album) {
 }
 
 
-const fs = require('fs');
-const path = require('path');
-
-// Helper function to get image files from a folder
-function getPhotosFromFolder(folderPath) {
-    const files = fs.readdirSync(folderPath); // Read folder content
-    return files.filter(file => file.match(/\.(jpg|jpeg|png|gif)$/i)); // Filter image files
-}
-
-// Folder paths for each category
-const directories = {
-    'photojournalism': {
-        'Street Stories': path.join(__dirname, 'photojournalism', 'street_stories'),
-        'Eastern Europe': path.join(__dirname, 'photojournalism', 'eastern_europe'),
-        'The People': path.join(__dirname, 'photojournalism', 'the_people')
-    },
-    'portraits': {
-        'Commissions': path.join(__dirname, 'portraits', 'commissions'),
-        'Friends & Family': path.join(__dirname, 'portraits', 'friends_and_family')
-    },
-    'events': {
-        'Public Events': path.join(__dirname, 'events', 'public_events'),
-        'Private Events': path.join(__dirname, 'events', 'private_events'),
-        'Brands': path.join(__dirname, 'events', 'brands')
-    },
-    'personal': {
-        'Travel': path.join(__dirname, 'personal', 'travel'),
+// Helper function to get image files from a folder - browser compatible version
+function getPhotosFromFolder(category, album) {
+    // Map album names to directory names for proper path construction
+    const albumDirMap = {
+        'Street Stories': 'street_stories',
+        'Eastern Europe': 'eastern_europe',
+        'The People': 'the_people',
+        'Commissions': 'commissions',
+        'Friends & Family': 'friends_and_family',
+        'Public Events': 'public_events',
+        'Private Events': 'private_events',
+        'Brands': 'brands',
+        'Travel': 'travel',
+        'Cars': 'cars',
+        'Experimental': 'experimental',
+        'Nature': 'nature'
+    };
+    
+    // This data structure contains all the images in each album
+    // It's populated based on the actual directory structure we examined
+    const photoCollections = {
+        photojournalism: {
+            'Street Stories': [
+                '081.jpg', 'DSC00533.jpg', 'DSC00559.jpg', 'DSC00582.jpg', 'DSC01128.jpg',
+                'DSC01486.jpg', 'DSC01497.jpg', 'DSC01512.jpg', 'DSC01576.jpg', 'DSC02048.jpg',
+                'DSC02923.jpg', 'DSC06358.jpg', 'DSC06666.jpg', 'DSC07065.JPG', 'DSC07825.JPG',
+                'DSC07839.JPG', 'DSC08003.JPG', 'IMG_0220.jpg', 'IMG_8109.jpg', 'IMG_8158.jpg',
+                'IMG_8497.jpg', 'IMG_8711.jpg', 'IMG_9456.jpg', 'IMG_9502.jpg', 'IMG_9505.jpg',
+                'italy-105.jpg', 'italy-11.jpg', 'italy-40.jpg', 'italy-53.jpg', 'italy-95.jpg'
+            ],
+            'Eastern Europe': [
+                'DSC04645.jpg', 'DSC04652.jpg', 'DSC04656.jpg', 'DSC04673.jpg', 'DSC04674.jpg',
+                'DSC04706.jpg', 'IMG_8506.jpg', 'IMG_8595.jpg', 'IMG_8714.jpg', 'IMG_8820.jpg',
+                'IMG_8823.jpg', 'IMG_8829.jpg', 'IMG_8836.jpg', 'warsaw-1418.jpg', 'warsaw-1449.jpg'
+            ],
+            'The People': ['IMG_0211.jpg', 'IMG_0219.jpg']
+        },
+        portraits: {
+            'Commissions': [
+                '2020NEWb_1.jpg', '2020NEWe.jpg', 'IMG_6142.jpg', 'IMG_6151.jpg', 'IMG_6170.jpg',
+                'IMG_6178.jpg', 'IMG_7832.JPG', 'hana_2021_amsterdam-14.jpg', 'hana_2021_amsterdam-8.jpg'
+            ],
+            'Friends & Family': [
+                '55-DSC06358.jpg', '57-DSC06368.jpg', 'DSC00622.jpg', 'DSC02967.jpg', 'DSC02982.jpg',
+                'DSC03078.jpg', 'DSC03094.jpg', 'DSC03558.jpg', 'DSC05104.jpg', 'DSC05137.jpg',
+                'DSC05146.jpg', 'DSC05229.jpg', 'DSC05385.jpg', 'DSC05645.jpg', 'DSC06304.jpg',
+                'DSC07874.JPG', 'IMG_0759.jpg', 'IMG_0806.jpg', 'IMG_0841.jpg', 'IMG_0909.jpg',
+                'IMG_8975.jpg', 'IMG_9162.jpg', 'IMG_9163.jpg', 'IMG_9389.jpg', 'IMG_9397.jpg',
+                'IMG_9413.jpg', 'IMG_9459.jpg', 'IMG_9488.jpg', 'IMG_9818.jpg'
+            ]
+        },
+        events: {
+            'Public Events': [
+                'DSC02411.jpg', 'DSC02547.jpg', 'DSC02600.jpg', 'DSC02602.jpg', 'DSC02625.jpg',
+                'DSC02712.jpg', 'IMG_7307.jpg', 'IMG_7312.jpg', 'IMG_9652.jpg'
+            ],
+            'Private Events': [
+                'DSC04801.jpg', 'DSC05173.jpg', 'DSC08511.jpg', 'DSC08647.jpg', 'DSC08701.jpg',
+                'DSC08732.jpg', 'DSC08878.jpg', 'HalloweenParty44.jpg', 'HalloweenParty49.jpg',
+                'IMG_1848.jpg', 'IMG_5270closeup.jpg', '_DSC0006.JPG', '_DSC0062.JPG', '_DSC0201.JPG',
+                '_DSC0206.JPG', '_MG_5254.jpg', 'bday-60th-166.jpg', 'bday-60th-167.jpg',
+                'bday-60th-4.jpg', 'bday-60th-40.jpg', 'bday-60th-6.jpg'
+            ],
+            'Brands': [
+                'DSC05724.jpg', 'DSC05731.jpg', 'DSC05759.jpg'
+            ]
+        },
+        personal: {
+            'Travel': [
+                '49FF53E2-8B17-405D-A21B-849B0275D93B.jpg', 'DSC00888.JPG', 'DSC02950.jpg', 'DSC03161.jpg',
+                'DSC03632.jpg', 'DSC06364.jpg', 'DSC07516.jpg', 'DSC07693.JPG', 'DSC07709.JPG', 'DSC07897.JPG',
+                'DSC07926.JPG', 'IMG_7359.jpg', 'IMG_8500.jpg', 'IMG_8573.jpg', 'IMG_8696.jpg', 'IMG_8709.jpg',
+                'IMG_9168.jpg', 'IMG_9464.jpg', '_MG_4669.jpg', 'italy-1.jpg', 'italy-19.jpg', 'italy-6.jpg'
+            ],
+            'Cars': [
+                'BMW1.jpg', 'DSC00433.jpg', 'DSC07027.jpg', 'DSC07038.jpg', 'DSC07067.jpg', 'DSC07188.jpg',
+                'DSC07332.jpg', 'DSC07352.jpg', 'DSC07673.JPG', 'IMG_3600-v2.jpg', 'IMG_3624.jpg', 'IMG_9044.jpg'
+            ],
+            'Experimental': ['6.jpg', 'edit4.jpg'],
+            'Nature': [
+                '78-DSC06461.jpg', 'DSC03859.jpg', 'DSC03864.jpg', 'DSC03873.jpg', 'DSC04339.jpg',
+                'IMG_7355.jpg', 'IMG_7383.jpg', 'IMG_8464.jpg', 'IMG_8793.jpg', 'IMG_8804.jpg',
+                'IMG_8807.jpg', 'IMG_8832.jpg', 'IMG_8835.jpg', 'IMG_8841.jpg', 'IMG_8845.jpg',
+                'IMG_8846.jpg', 'IMG_8920.jpg', 'IMG_9008.jpg', 'italy-23.jpg', 'italy-25.jpg',
+                'italy-32.jpg', 'italy-34.jpg', 'italy-36.jpg'
+            ]
+        }
+    };
+    
+    // Return the photos for the specified category and album
+    if (photoCollections[category] && photoCollections[category][album]) {
+        return photoCollections[category][album];
     }
+    
+    // Return an empty array if the category or album doesn't exist
+    return [];
 }
 
-// Portfolio data structure
+// Portfolio data structure - simplified for dynamic loading
 const portfolioData = {
     photojournalism: {
-        'Street Stories': {
-            photos: getPhotosFromFolder('photojournalism', 'Street Stories')
-        },
-        'Eastern Europe': {
-            photos: getPhotosFromFolder('photojournalism', 'Eastern Europe')
-        },
-        'The People': {
-            photos: getPhotosFromFolder('photojournalism', 'The People')
-        }
+        'Street Stories': {},
+        'Eastern Europe': {},
+        'The People': {}
     },
     portraits: {
-        'Commissions': {
-            photos: getPhotosFromFolder('portraits', 'Commissions')
-        },
-        'Friends & Family': {
-            photos: getPhotosFromFolder('portraits', 'Friends & Family')
-        }
+        'Commissions': {},
+        'Friends & Family': {}
     },
     events: {
-        'Public Events': {
-            photos: getPhotosFromFolder('events', 'Public Events')
-        },
-        'Private Events': {
-            photos: getPhotosFromFolder('events', 'Private Events')
-        },
-        'Brands': {
-            photos: getPhotosFromFolder('events', 'Brands')
-        }
+        'Public Events': {},
+        'Private Events': {},
+        'Brands': {}
     },
     personal: {
-        'Travel': {
-            photos: getPhotosFromFolder('personal', 'Travel')
-        },
-        'Cars': {
-            photos: getPhotosFromFolder('personal', 'Cars')
-        },
-        'Experimental': {
-            photos: getPhotosFromFolder('personal', 'Experimental')
-        },
-        'Nature': {
-            photos: getPhotosFromFolder('personal', 'Nature')
-        }
+        'Travel': {},
+        'Cars': {},
+        'Experimental': {},
+        'Nature': {}
     }
 };
 
