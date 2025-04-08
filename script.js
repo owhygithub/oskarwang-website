@@ -15,24 +15,29 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize custom cursor with highly optimized animation
     const cursor = document.querySelector('.cursor');
     
-    // Optimized cursor variables
+    // Super snappy cursor variables
     let mouseX = 0, mouseY = 0;
     let cursorX = 0, cursorY = 0;
-    let speed = 0.3; // Increased for more responsive movement
+    let speed = 0.9; // Much higher speed for snappy movement
+    let albumViewSpeed = 1.0; // Even faster for album view
     
     // Use a boolean flag for hover state instead of changing properties repeatedly
     let isHovering = false;
+    let isInAlbumView = false;
     
     // Pre-calculate transform strings for better performance
     const baseTransform = 'translate(-50%, -50%) rotate(-45deg)';
     
-    // Optimized animation function using RAF and minimal calculations
+    // Highly optimized animation function for snappy cursor movement
     function animateCursor() {
         // Only calculate position when cursor is visible
         if (cursor.style.opacity !== '0') {
-            // Simple linear interpolation with minimal operations
-            cursorX += (mouseX - cursorX) * speed;
-            cursorY += (mouseY - cursorY) * speed;
+            // Use much faster speed for snappy movement
+            const currentSpeed = isInAlbumView ? albumViewSpeed : speed;
+            
+            // Almost direct positioning with minimal lag
+            cursorX = mouseX - (mouseX - cursorX) * (1 - currentSpeed);
+            cursorY = mouseY - (mouseY - cursorY) * (1 - currentSpeed);
             
             // Use translate3d for hardware acceleration with minimal string concatenation
             cursor.style.transform = `translate3d(${cursorX}px, ${cursorY}px, 0) ${baseTransform}`;
@@ -50,14 +55,18 @@ document.addEventListener('DOMContentLoaded', () => {
         mouseX = e.clientX;
         mouseY = e.clientY;
         
+        // For super snappy movement, directly update cursor position
+        // This makes the cursor follow the mouse almost instantly
+        cursorX = mouseX;
+        cursorY = mouseY;
+        
         // Set cursor position directly on first move for immediate response
         if (cursor.style.opacity !== '1') {
             cursor.style.opacity = '1';
-            // Jump to position immediately on first appearance
-            cursorX = mouseX;
-            cursorY = mouseY;
-            cursor.style.transform = `translate3d(${cursorX}px, ${cursorY}px, 0) ${baseTransform}`;
         }
+        
+        // Apply transform directly for maximum responsiveness
+        cursor.style.transform = `translate3d(${cursorX}px, ${cursorY}px, 0) ${baseTransform}`;
     }, { passive: true }); // Use passive listener for better performance
     
     // Hide cursor when mouse leaves the window
@@ -82,18 +91,33 @@ document.addEventListener('DOMContentLoaded', () => {
         if (target.matches('a, button, .nav-btn, .portfolio-item img, .back-btn, .portfolio-category, .portfolio-album')) {
             cursor.style.borderBottomColor = '#ffffff';
             isHovering = true;
-            speed = 0.5; // Much faster on hover for better responsiveness
+            speed = 1.0; // Instant response on hover
+        }
+        // Special handling for photo items in album view for better responsiveness
+        if (target.matches('.photo-item, .photo-image')) {
+            cursor.style.borderBottomColor = '#ffffff';
+            isHovering = true;
+            speed = 1.0; // Instant response for photo items
         }
     }, { passive: true });
+
+
     
     document.addEventListener('mouseout', (e) => {
         const target = e.target;
         if (target.matches('a, button, .nav-btn, .portfolio-item img, .back-btn, .portfolio-category, .portfolio-album')) {
             cursor.style.borderBottomColor = '#ffea00';
             isHovering = false;
-            speed = 0.3; // Return to normal speed
+            speed = 0.9; // Return to our snappy base speed
+        }
+        // Special handling for photo items in album view
+        if (target.matches('.photo-item, .photo-image')) {
+            cursor.style.borderBottomColor = '#ffea00';
+            isHovering = false;
+            speed = isInAlbumView ? 1.0 : 0.9; // Return to appropriate snappy speed based on view
         }
     }, { passive: true });
+
     
     });
     
@@ -198,6 +222,14 @@ function showPage(page) {
     const backBtn = document.querySelector('.back-btn');
     const allPages = document.querySelectorAll('.page');
     
+    // Reset album view flag when not in photos page
+    if (page !== 'portfolio-photos') {
+        isInAlbumView = false;
+    }
+    
+    // Reset scroll position to top
+    window.scrollTo(0, 0);
+    
     // Hide all pages first
     allPages.forEach(element => {
         element.classList.remove('active-page');
@@ -254,6 +286,10 @@ function showAlbumsForCategory(category) {
     const albumsGrid = document.querySelector('.albums-grid');
     const categoryTitle = document.querySelector('.album-category-title');
     
+    // Reset scroll position to top when showing albums
+    window.scrollTo(0, 0);
+    document.querySelector('.portfolio-albums-page').scrollTop = 0;
+    
     // Update the title
     categoryTitle.textContent = category.charAt(0).toUpperCase() + category.slice(1);
     
@@ -265,38 +301,41 @@ function showAlbumsForCategory(category) {
     
     // Create album elements
     Object.keys(categoryAlbums).forEach(albumName => {
-        // Get photos for this album
-        const photos = getPhotosFromFolder(category, albumName);
-        if (photos.length === 0) {
-            console.warn(`No photos found for ${category}/${albumName}`);
-            return; // Skip this album if no photos
-        }
-        
-        const coverImage = photos[0]; // Use first photo as cover
-        const albumDir = albumName.toLowerCase().replace(/ /g, '_').replace(/&/g, 'and');
-        
-        const albumElement = document.createElement('div');
-        albumElement.className = 'portfolio-album';
-        albumElement.setAttribute('data-album', albumName);
-        
-        albumElement.innerHTML = `
-            <div class="album-overlay">
-                <h3>${albumName}</h3>
-            </div>
-            <img src="images/${category}/${albumDir}/${coverImage}" alt="${albumName}" class="album-image">
-        `;
-        
-        albumElement.addEventListener('click', () => {
-            showPhotosForAlbum(category, albumName);
+        // Get photos for this album - we'll use the Promise version now
+        getPhotosFromFolder(category, albumName).then(photos => {
+            if (photos.length === 0) {
+                console.warn(`No photos found for ${category}/${albumName}`);
+                return; // Skip this album if no photos
+            }
+            
+            // Use custom thumbnail if specified, otherwise use first photo
+            const albumData = categoryAlbums[albumName];
+            const coverImage = albumData.thumbnail || photos[0];
+            const albumDir = albumName.toLowerCase().replace(/ /g, '_').replace(/&/g, 'and');
+            
+            const albumElement = document.createElement('div');
+            albumElement.className = 'portfolio-album';
+            albumElement.setAttribute('data-album', albumName);
+            
+            albumElement.innerHTML = `
+                <div class="album-overlay">
+                    <h3>${albumName}</h3>
+                </div>
+                <img src="images/${category}/${albumDir}/${coverImage}" alt="${albumName}" class="album-image">
+            `;
+            
+            albumElement.addEventListener('click', () => {
+                showPhotosForAlbum(category, albumName);
+            });
+            
+            albumsGrid.appendChild(albumElement);
+            
+            // Check if we need to show an error message after all albums have been processed
+            if (albumsGrid.children.length === 0 && Object.keys(categoryAlbums).length === Object.keys(categoryAlbums).indexOf(albumName) + 1) {
+                albumsGrid.innerHTML = '<div class="error-message">No albums found for this category.</div>';
+            }
         });
-        
-        albumsGrid.appendChild(albumElement);
     });
-    
-    // If no albums were added, show an error message
-    if (albumsGrid.children.length === 0) {
-        albumsGrid.innerHTML = '<div class="error-message">No albums found for this category.</div>';
-    }
     
     // Show the albums page
     const allPages = document.querySelectorAll('.page');
@@ -315,6 +354,13 @@ function showPhotosForAlbum(category, album) {
     currentAlbum = album;
     const photosContainer = document.querySelector('.photos-container');
     const albumTitle = document.querySelector('.album-title');
+    
+    // Reset scroll position to top when showing photos
+    window.scrollTo(0, 0);
+    document.querySelector('.portfolio-photos-page').scrollTop = 0;
+    
+    // Set flag to indicate we're in album view for faster cursor movement
+    isInAlbumView = true;
     
     // Update the title
     albumTitle.textContent = album;
@@ -346,12 +392,35 @@ function showPhotosForAlbum(category, album) {
             const photoElement = document.createElement('div');
             photoElement.className = 'photo-item';
             
-            photoElement.innerHTML = `
-                <img src="images/${category}/${albumDir}/${photo}" alt="${album} photo" class="photo-image">
-            `;
+            // Create the image element
+            const img = document.createElement('img');
+            img.src = `images/${category}/${albumDir}/${photo}`;
+            img.alt = `${album} photo`;
+            img.className = 'photo-image';
             
+            // Check if the image is landscape after it loads with improved ratio detection
+            img.onload = function() {
+                const ratio = this.naturalWidth / this.naturalHeight;
+                
+                // More precise landscape detection with a slight threshold
+                if (ratio > 1.2) {
+                    // This is a landscape photo
+                    photoElement.classList.add('landscape');
+                } else if (ratio > 0.8 && ratio < 1.2) {
+                    // This is a square-ish photo, handle differently
+                    photoElement.classList.add('square');
+                }
+                
+                // Force a small layout recalculation to ensure grid alignment
+                setTimeout(() => {
+                    window.dispatchEvent(new Event('resize'));
+                }, 50);
+            };
+            
+            photoElement.appendChild(img);
             photosContainer.appendChild(photoElement);
         });
+
     }).catch(error => {
         console.error('Error loading photos:', error);
         photosContainer.innerHTML = '<div class="error-message">Error loading photos. Please try again later.</div>';
@@ -371,125 +440,163 @@ function showPhotosForAlbum(category, album) {
 }
 
 
-// Helper function to get image files from a folder - browser compatible version
+// Helper function to get image files from a folder - updated to include all new photos
 function getPhotosFromFolder(category, album) {
-    // Map album names to directory names for proper path construction
-    const albumDirMap = {
-        'Street Stories': 'street_stories',
-        'Eastern Europe': 'eastern_europe',
-        'The People': 'the_people',
-        'Commissions': 'commissions',
-        'Friends & Family': 'friends_and_family',
-        'Public Events': 'public_events',
-        'Private Events': 'private_events',
-        'Brands': 'brands',
-        'Travel': 'travel',
-        'Cars': 'cars',
-        'Experimental': 'experimental',
-        'Nature': 'nature'
-    };
-    
-    // This data structure contains all the images in each album
-    // It's populated based on the actual directory structure we examined
-    const photoCollections = {
-        photojournalism: {
-            'Street Stories': [
-                '081.jpg', 'DSC00533.jpg', 'DSC00559.jpg', 'DSC00582.jpg', 'DSC01128.jpg',
-                'DSC01486.jpg', 'DSC01497.jpg', 'DSC01512.jpg', 'DSC01576.jpg', 'DSC02048.jpg',
-                'DSC02923.jpg', 'DSC06358.jpg', 'DSC06666.jpg', 'DSC07065.JPG', 'DSC07825.JPG',
-                'DSC07839.JPG', 'DSC08003.JPG', 'IMG_0220.jpg', 'IMG_8109.jpg', 'IMG_8158.jpg',
-                'IMG_8497.jpg', 'IMG_8711.jpg', 'IMG_9456.jpg', 'IMG_9502.jpg', 'IMG_9505.jpg',
-                'italy-105.jpg', 'italy-11.jpg', 'italy-40.jpg', 'italy-53.jpg', 'italy-95.jpg'
-            ],
-            'Eastern Europe': [
-                'DSC04645.jpg', 'DSC04652.jpg', 'DSC04656.jpg', 'DSC04673.jpg', 'DSC04674.jpg',
-                'DSC04706.jpg', 'IMG_8506.jpg', 'IMG_8595.jpg', 'IMG_8714.jpg', 'IMG_8820.jpg',
-                'IMG_8823.jpg', 'IMG_8829.jpg', 'IMG_8836.jpg', 'warsaw-1418.jpg', 'warsaw-1449.jpg'
-            ],
-            'The People': ['IMG_0211.jpg', 'IMG_0219.jpg']
-        },
-        portraits: {
-            'Commissions': [
-                '2020NEWb_1.jpg', '2020NEWe.jpg', 'IMG_6142.jpg', 'IMG_6151.jpg', 'IMG_6170.jpg',
-                'IMG_6178.jpg', 'IMG_7832.JPG', 'hana_2021_amsterdam-14.jpg', 'hana_2021_amsterdam-8.jpg'
-            ],
-            'Friends & Family': [
-                '55-DSC06358.jpg', '57-DSC06368.jpg', 'DSC00622.jpg', 'DSC02967.jpg', 'DSC02982.jpg',
-                'DSC03078.jpg', 'DSC03094.jpg', 'DSC03558.jpg', 'DSC05104.jpg', 'DSC05137.jpg',
-                'DSC05146.jpg', 'DSC05229.jpg', 'DSC05385.jpg', 'DSC05645.jpg', 'DSC06304.jpg',
-                'DSC07874.JPG', 'IMG_0759.jpg', 'IMG_0806.jpg', 'IMG_0841.jpg', 'IMG_0909.jpg',
-                'IMG_8975.jpg', 'IMG_9162.jpg', 'IMG_9163.jpg', 'IMG_9389.jpg', 'IMG_9397.jpg',
-                'IMG_9413.jpg', 'IMG_9459.jpg', 'IMG_9488.jpg', 'IMG_9818.jpg'
-            ]
-        },
-        events: {
-            'Public Events': [
-                'DSC02411.jpg', 'DSC02547.jpg', 'DSC02600.jpg', 'DSC02602.jpg', 'DSC02625.jpg',
-                'DSC02712.jpg', 'IMG_7307.jpg', 'IMG_7312.jpg', 'IMG_9652.jpg'
-            ],
-            'Private Events': [
-                'DSC04801.jpg', 'DSC05173.jpg', 'DSC08511.jpg', 'DSC08647.jpg', 'DSC08701.jpg',
-                'DSC08732.jpg', 'DSC08878.jpg', 'HalloweenParty44.jpg', 'HalloweenParty49.jpg',
-                'IMG_1848.jpg', 'IMG_5270closeup.jpg', '_DSC0006.JPG', '_DSC0062.JPG', '_DSC0201.JPG',
-                '_DSC0206.JPG', '_MG_5254.jpg', 'bday-60th-166.jpg', 'bday-60th-167.jpg',
-                'bday-60th-4.jpg', 'bday-60th-40.jpg', 'bday-60th-6.jpg'
-            ],
-            'Brands': [
-                'DSC05724.jpg', 'DSC05731.jpg', 'DSC05759.jpg'
-            ]
-        },
-        personal: {
-            'Travel': [
-                '49FF53E2-8B17-405D-A21B-849B0275D93B.jpg', 'DSC00888.JPG', 'DSC02950.jpg', 'DSC03161.jpg',
-                'DSC03632.jpg', 'DSC06364.jpg', 'DSC07516.jpg', 'DSC07693.JPG', 'DSC07709.JPG', 'DSC07897.JPG',
-                'DSC07926.JPG', 'IMG_7359.jpg', 'IMG_8500.jpg', 'IMG_8573.jpg', 'IMG_8696.jpg', 'IMG_8709.jpg',
-                'IMG_9168.jpg', 'IMG_9464.jpg', '_MG_4669.jpg', 'italy-1.jpg', 'italy-19.jpg', 'italy-6.jpg'
-            ],
-            'Cars': [
-                'BMW1.jpg', 'DSC00433.jpg', 'DSC07027.jpg', 'DSC07038.jpg', 'DSC07067.jpg', 'DSC07188.jpg',
-                'DSC07332.jpg', 'DSC07352.jpg', 'DSC07673.JPG', 'IMG_3600-v2.jpg', 'IMG_3624.jpg', 'IMG_9044.jpg'
-            ],
-            'Experimental': ['6.jpg', 'edit4.jpg'],
-            'Nature': [
-                '78-DSC06461.jpg', 'DSC03859.jpg', 'DSC03864.jpg', 'DSC03873.jpg', 'DSC04339.jpg',
-                'IMG_7355.jpg', 'IMG_7383.jpg', 'IMG_8464.jpg', 'IMG_8793.jpg', 'IMG_8804.jpg',
-                'IMG_8807.jpg', 'IMG_8832.jpg', 'IMG_8835.jpg', 'IMG_8841.jpg', 'IMG_8845.jpg',
-                'IMG_8846.jpg', 'IMG_8920.jpg', 'IMG_9008.jpg', 'italy-23.jpg', 'italy-25.jpg',
-                'italy-32.jpg', 'italy-34.jpg', 'italy-36.jpg'
-            ]
+    // Return a Promise to make this function compatible with the async usage in showPhotosForAlbum
+    return new Promise((resolve) => {
+        // Map album names to directory names for proper path construction
+        const albumDirMap = {
+            'Street Stories': 'street_stories',
+            'Eastern Europe': 'eastern_europe',
+            'The People': 'the_people',
+            'Commissions': 'commissions',
+            'Friends & Family': 'friends_and_family',
+            'Public Events': 'public_events',
+            'Private Events': 'private_events',
+            'Brands': 'brands',
+            'Travel': 'travel',
+            'Cars': 'cars',
+            'Experimental': 'experimental',
+            'Nature': 'nature'
+        };
+        
+        // Updated photo collections with all available images
+        const photoCollections = {
+            photojournalism: {
+                'Street Stories': [
+                    '081.jpg', 'DSC00533.jpg', 'DSC00559.jpg', 'DSC00582.jpg', 'DSC00755.jpg', 'DSC01128.jpg',
+                    'DSC01486.jpg', 'DSC01497.jpg', 'DSC01512.jpg', 'DSC01576.jpg', 'DSC02048.jpg',
+                    'DSC02923.jpg', 'DSC06358.jpg', 'DSC06666.jpg', 'DSC07065.JPG', 'DSC07816.JPG', 'DSC07825.JPG',
+                    'DSC07839.JPG', 'DSC08003.JPG', 'IMG_0220.jpg', 'IMG_8109.jpg', 'IMG_8158.jpg',
+                    'IMG_8497.jpg', 'IMG_8711.jpg', 'IMG_9456.jpg', 'IMG_9502.jpg', 'IMG_9505.jpg',
+                    'italy-105.jpg', 'italy-11.jpg', 'italy-40.jpg', 'italy-53.jpg', 'italy-95.jpg'
+                ],
+                'Eastern Europe': [
+                    'DSC04645.jpg', 'DSC04652.jpg', 'DSC04656.jpg', 'DSC04673.jpg', 'DSC04674.jpg',
+                    'DSC04706.jpg', 'IMG_8506.jpg', 'IMG_8595.jpg', 'IMG_8714.jpg', 'IMG_8820.jpg',
+                    'IMG_8823.jpg', 'IMG_8829.jpg', 'IMG_8836.jpg', 'warsaw-1418.jpg', 'warsaw-1449.jpg'
+                ],
+                'The People': [
+                    'IMG_0211.jpg', 'IMG_0219.jpg', 'IMG_7387.jpg', 'IMG_7390.jpg', 'IMG_7395.jpg', 
+                    'IMG_7397.jpg', 'IMG_7419.jpg', 'IMG_7429.jpg', 'IMG_7432.jpg', 'IMG_7447.jpg', 
+                    'IMG_7460.jpg', 'IMG_7463.jpg', 'IMG_7465.jpg'
+                ]
+            },
+            portraits: {
+                'Commissions': [
+                    '2020NEWb_1.jpg', '2020NEWe.jpg', 'DSC06736.jpg', 'DSC06772.jpg', 'DSC06778.jpg',
+                    'DSC06789.jpg', 'IMG_6142.jpg', 'IMG_6151.jpg', 'IMG_6170.jpg', 'IMG_6178.jpg', 
+                    'IMG_7832.JPG', 'IMG_9162.jpg', 'IMG_9163.jpg', 'hana_2021_amsterdam-14.jpg', 
+                    'hana_2021_amsterdam-8.jpg'
+                ],
+                'Friends & Family': [
+                    '55-DSC06358.jpg', '57-DSC06368.jpg', 'DSC00622.jpg', 'DSC02459.jpg', 'DSC02461.jpg',
+                    'DSC02967.jpg', 'DSC02982.jpg', 'DSC03078.jpg', 'DSC03094.jpg', 'DSC03558.jpg', 
+                    'DSC05104.jpg', 'DSC05137.jpg', 'DSC05146.jpg', 'DSC05229.jpg', 'DSC05385.jpg', 
+                    'DSC05645.jpg', 'DSC06304.jpg', 'DSC07874.JPG', 'IMG_0759.jpg', 'IMG_0806.jpg', 
+                    'IMG_0841.jpg', 'IMG_0909.jpg', 'IMG_8975.jpg', 'IMG_9162.jpg', 'IMG_9163.jpg', 
+                    'IMG_9389.jpg', 'IMG_9397.jpg', 'IMG_9413.jpg', 'IMG_9459.jpg', 'IMG_9488.jpg', 
+                    'IMG_9818.jpg'
+                ]
+            },
+            events: {
+                'Public Events': [
+                    'DSC02411.jpg', 'DSC02490.jpg', 'DSC02501.jpg', 'DSC02506.jpg', 'DSC02519.jpg',
+                    'DSC02543.jpg', 'DSC02547.jpg', 'DSC02566.jpg', 'DSC02582.jpg', 'DSC02600.jpg',
+                    'DSC02602.jpg', 'DSC02625.jpg', 'DSC02712.jpg', 'IMG_7307.jpg', 'IMG_7312.jpg',
+                    'IMG_9652.jpg'
+                ],
+                'Private Events': [
+                    'DSC04801.jpg', 'DSC05173.jpg', 'DSC08511.jpg', 'DSC08647.jpg', 'DSC08701.jpg',
+                    'DSC08732.jpg', 'DSC08878.jpg', 'HalloweenParty44.jpg', 'HalloweenParty49.jpg',
+                    'IMG_1848.jpg', 'IMG_5270closeup.jpg', '_DSC0006.JPG', '_DSC0062.JPG', '_DSC0201.JPG',
+                    '_DSC0206.JPG', '_MG_5254.jpg', 'bday-60th-166.jpg', 'bday-60th-167.jpg',
+                    'bday-60th-4.jpg', 'bday-60th-40.jpg', 'bday-60th-6.jpg'
+                ],
+                'Brands': [
+                    'DSC05724.jpg', 'DSC05731.jpg', 'DSC05759.jpg'
+                ]
+            },
+            personal: {
+                'Travel': [
+                    '49FF53E2-8B17-405D-A21B-849B0275D93B.jpg', 'DSC00888.JPG', 'DSC02479.jpg',
+                    'DSC02950.jpg', 'DSC03161.jpg', 'DSC03632.jpg', 'DSC06364.jpg', 'DSC07516.jpg',
+                    'DSC07693.JPG', 'DSC07709.JPG', 'DSC07816.JPG', 'DSC07897.JPG', 'DSC07926.JPG',
+                    'IMG_7359.jpg', 'IMG_8500.jpg', 'IMG_8573.jpg', 'IMG_8696.jpg', 'IMG_8709.jpg',
+                    'IMG_9168.jpg', 'IMG_9464.jpg', '_MG_4669.jpg', 'italy-1.jpg', 'italy-19.jpg',
+                    'italy-6.jpg'
+                ],
+                'Cars': [
+                    'BMW1.jpg', 'DSC00433.jpg', 'DSC07027.jpg', 'DSC07038.jpg', 'DSC07067.jpg',
+                    'DSC07188.jpg', 'DSC07332.jpg', 'DSC07352.jpg', 'DSC07673.JPG', 'IMG_3600-v2.jpg',
+                    'IMG_3624.jpg', 'IMG_5266.jpg', 'IMG_5346.jpg', 'IMG_9044.jpg'
+                ],
+                'Experimental': ['6.jpg', 'edit4.jpg'],
+                'Nature': [
+                    '78-DSC06461.jpg', 'DSC03859.jpg', 'DSC03864.jpg', 'DSC03873.jpg', 'DSC04339.jpg',
+                    'IMG_7355.jpg', 'IMG_7383.jpg', 'IMG_8464.jpg', 'IMG_8793.jpg', 'IMG_8804.jpg',
+                    'IMG_8807.jpg', 'IMG_8832.jpg', 'IMG_8835.jpg', 'IMG_8841.jpg', 'IMG_8845.jpg',
+                    'IMG_8846.jpg', 'IMG_8920.jpg', 'IMG_9008.jpg', 'italy-23.jpg', 'italy-25.jpg',
+                    'italy-32.jpg', 'italy-34.jpg', 'italy-36.jpg'
+                ]
+            }
+        };
+        
+        // Return the photos for the specified category and album
+        if (photoCollections[category] && photoCollections[category][album]) {
+            resolve(photoCollections[category][album]);
+        } else {
+            // Return an empty array if the category or album doesn't exist
+            resolve([]);
         }
-    };
-    
-    // Return the photos for the specified category and album
-    if (photoCollections[category] && photoCollections[category][album]) {
-        return photoCollections[category][album];
-    }
-    
-    // Return an empty array if the category or album doesn't exist
-    return [];
+    });
 }
 
-// Portfolio data structure - simplified for dynamic loading
+// Portfolio data structure - simplified for dynamic loading with custom thumbnails
 const portfolioData = {
     photojournalism: {
-        'Street Stories': {},
-        'Eastern Europe': {},
-        'The People': {}
+        'Street Stories': {
+            thumbnail: 'italy-95.jpg' // Custom thumbnail image
+        },
+        'Eastern Europe': {
+            thumbnail: 'DSC04656.jpg' // Custom thumbnail image
+        },
+        'The People': {
+            thumbnail: 'IMG_7395.jpg' // Custom thumbnail image
+        }
     },
     portraits: {
-        'Commissions': {},
-        'Friends & Family': {}
+        'Commissions': {
+            thumbnail: 'IMG_9162.jpg' // Custom thumbnail image
+        },
+        'Friends & Family': {
+            thumbnail: 'DSC05229.jpg' // Custom thumbnail image
+        }
     },
     events: {
-        'Public Events': {},
-        'Private Events': {},
-        'Brands': {}
+        'Public Events': {
+            thumbnail: 'DSC02600.jpg' // Custom thumbnail image
+        },
+        'Private Events': {
+            thumbnail: 'bday-60th-6.jpg' // Custom thumbnail image
+        },
+        'Brands': {
+            thumbnail: 'DSC05731.jpg' // Custom thumbnail image
+        }
     },
     personal: {
-        'Travel': {},
-        'Cars': {},
-        'Experimental': {},
-        'Nature': {}
+        'Travel': {
+            thumbnail: 'italy-19.jpg' // Custom thumbnail image
+        },
+        'Cars': {
+            thumbnail: 'DSC07038.jpg' // Custom thumbnail image
+        },
+        'Experimental': {
+            thumbnail: 'edit4.jpg' // Custom thumbnail image
+        },
+        'Nature': {
+            thumbnail: 'IMG_8845.jpg' // Custom thumbnail image
+        }
     }
 };
 
@@ -610,6 +717,11 @@ function goBack() {
     
     // Remove current page from stack
     navigationStack.pop();
+    
+    // Reset album view flag when navigating away from photos page
+    if (navigationStack[navigationStack.length - 1] !== 'portfolio-photos') {
+        isInAlbumView = false;
+    }
     
     // Go to previous page
     const previousPage = navigationStack[navigationStack.length - 1];

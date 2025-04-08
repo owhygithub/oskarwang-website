@@ -35,12 +35,13 @@ Also add another page called prints. Change the current print page, instead of o
     <!-- Main Page -->
     <div class="page main-page active-page">
         <h1 class="logo">Oskar Wang Studios</h1>
+        <p class="tagline">Capturing moments you'll feel forever.</p>
         <!-- Update nav buttons section -->
         <div class="nav-buttons">
             <button class="nav-btn" onclick="showPage('portfolio')">Portfolio</button>
+            <button class="nav-btn" onclick="showPage('pricing')">Pricing</button>
             <button class="nav-btn" onclick="showPage('contact')">Contact</button>
             <button class="nav-btn shop-btn" onclick="redirectToShop()">Prints</button>
-        </div>
         </div>
     </div>
 
@@ -53,25 +54,25 @@ Also add another page called prints. Change the current print page, instead of o
                 <div class="category-overlay">
                     <h3>Events</h3>
                 </div>
-                <img src="images/bday-60th-6.jpg" alt="Events" class="category-image">
+                <img src="images/events/private_events/bday-60th-167.jpg" alt="Events" class="category-image">
             </div>
             <div class="portfolio-category" data-category="portraits">
                 <div class="category-overlay">
                     <h3>Portraits</h3>
                 </div>
-                <img src="images/DSC03558.jpg" alt="Portraits" class="category-image">
+                <img src="images/portraits/commissions/IMG_9163.jpg" alt="Portraits" class="category-image">
             </div>
             <div class="portfolio-category" data-category="photojournalism">
                 <div class="category-overlay">
                     <h3>Photojournalism</h3>
                 </div>
-                <img src="images/49FF53E2-8B17-405D-A21B-849B0275D93B.jpg" alt="Photojournalism" class="category-image">
+                <img src="images/photojournalism/the_people/IMG_7429.jpg" alt="Photojournalism" class="category-image">
             </div>
             <div class="portfolio-category" data-category="personal">
                 <div class="category-overlay">
                     <h3>Personal</h3>
                 </div>
-                <img src="images/DSC03632.jpg" alt="Personal" class="category-image">
+                <img src="images/personal/travel/IMG_9464.jpg" alt="Personal" class="category-image">
             </div>
         </div>
     </div>
@@ -92,6 +93,83 @@ Also add another page called prints. Change the current print page, instead of o
         </div>
     </div>
 
+    <!-- Pricing Page -->
+    <div class="page pricing-page">
+        <h2 class="pricing-title">Photography Packages</h2>
+        <div class="pricing-container">
+            <table class="pricing-table">
+                <thead>
+                    <tr>
+                        <th>Package</th>
+                        <th>Tier</th>
+                        <th>Price per Hour (incl. editing)</th>
+                        <th>Duration</th>
+                        <th>Photos Included</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Portrait</td>
+                        <td class="tier-standard">Standard</td>
+                        <td>€88</td>
+                        <td>1 hour</td>
+                        <td>15 edited photos</td>
+                    </tr>
+                    <tr>
+                        <td>Portrait</td>
+                        <td class="tier-premium">Premium</td>
+                        <td>€100</td>
+                        <td>2 hours</td>
+                        <td>30 edited photos</td>
+                    </tr>
+                    <tr>
+                        <td>Event</td>
+                        <td class="tier-standard">Standard</td>
+                        <td>€150</td>
+                        <td>up to 2 hours</td>
+                        <td>50 edited photos</td>
+                    </tr>
+                    <tr>
+                        <td>Event</td>
+                        <td class="tier-premium">Premium</td>
+                        <td>€180</td>
+                        <td>up to 5 hours</td>
+                        <td>100 edited photos</td>
+                    </tr>
+                    <tr>
+                        <td>Brand/Corporate</td>
+                        <td class="tier-standard">Standard</td>
+                        <td>€200</td>
+                        <td>up to 2 hours</td>
+                        <td>30 edited photos</td>
+                    </tr>
+                    <tr>
+                        <td>Brand/Corporate</td>
+                        <td class="tier-premium">Premium</td>
+                        <td>€250</td>
+                        <td>up to 5 hours</td>
+                        <td>60 edited photos</td>
+                    </tr>
+                    <tr>
+                        <td>Personalized</td>
+                        <td class="tier-standard">Standard</td>
+                        <td>NA</td>
+                        <td>NA</td>
+                        <td>Email or DM me for unquiry</td>
+                    </tr>
+                    <tr>
+                        <td>Personalized</td>
+                        <td class="tier-premium">Premium</td>
+                        <td>NA</td>
+                        <td>NA</td>
+                        <td>Email or DM me for unquiry</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p class="pricing-note">All packages include basic photo editing, digital delivery, and a personal usage license. Premium packages also include priority editing and any additional retouching. Contact me for personalized packages or special requirements.</p>
+        </div>
+    </div>
+
     <!-- Contact Page -->
     <div class="page contact-page">
         <div class="contact-content">
@@ -105,6 +183,12 @@ Also add another page called prints. Change the current print page, instead of o
                     </div>
                     <p>Professional photographer specializing in event, portrait, and street photography based in the Netherlands 🇳🇱 and Czechia 🇨🇿 </p>
                 </div>
+                <div class="social-links">
+                    <p> For prints or copyright of pictures, please visit one of the following links: </p>
+                    <a href="https://www.saatchiart.com/account/profile/2746365" class="social-link" target="_blank"><img src="logos/saatchi-art.png" alt="SaatchiArt" class="custom-icon"></a>
+                    <a href="https://500px.com" class="social-link" target="_blank"><i class="fab fa-500px"></i></a>
+                    <a href="https://www.shutterstock.com/g/oskarwang" class="social-link" target="_blank"><img src="logos/shutterstock-icon.svg" alt="Shutterstock" class="custom-icon"></a>
+                </div>
             </div>
             <div>
                 <h3>Contact</h3>
@@ -116,36 +200,29 @@ Also add another page called prints. Change the current print page, instead of o
                     <a href="https://www.linkedin.com/in/oscarhywang/" class="social-link" target="_blank"><i class="fab fa-linkedin"></i></a>
                 </div>
                 <br>
-            </div>
-            <div class="social-links">
-                <p> For prints or copyright of pictures, please visit one of the following links: </p>
-                <a href="https://www.saatchiart.com/account/profile/2746365" class="social-link" target="_blank"><img src="logos/saatchi-art.png" alt="SaatchiArt" class="custom-icon"></a>
-                <a href="https://500px.com" class="social-link" target="_blank"><i class="fab fa-500px"></i></a>
-                <a href="https://www.shutterstock.com/g/oskarwang" class="social-link" target="_blank"><img src="logos/shutterstock-icon.svg" alt="Shutterstock" class="custom-icon"></a>
-            </div>
-            
-            <div class="contact-form-container">
-                <h3>Send a Message</h3>
-                <form id="contact-form" action="https://formspree.io/f/xbjnkdvl" method="POST">
-                    <input type="hidden" name="_replyto" value="oscarwang@email.cz">
-                    <div class="form-group">
-                        <label for="name">Name</label>
-                        <input type="text" id="name" name="name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="email">Email</label>
-                        <input type="email" id="email" name="email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="subject">Subject</label>
-                        <input type="text" id="subject" name="subject" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="message">Message</label>
-                        <textarea id="message" name="message" rows="5" required></textarea>
-                    </div>
-                    <button type="submit" class="submit-btn">Send Message</button>
-                </form>
+                <div class="contact-form-container">
+                    <h3>Send a Message</h3>
+                    <form id="contact-form" action="https://formspree.io/f/mkgjplwj" method="POST">
+                        <input type="hidden" name="_replyto" value="oscarwang@email.cz">
+                        <div class="form-group">
+                            <label for="name">Name</label>
+                            <input type="text" id="name" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="subject">Subject</label>
+                            <input type="text" id="subject" name="subject" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="message">Message</label>
+                            <textarea id="message" name="message" rows="5" required></textarea>
+                        </div>
+                        <button type="submit" class="submit-btn">Send Message</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

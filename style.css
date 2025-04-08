@@ -49,9 +49,19 @@ body {
 .logo {
     font-size: 2.5rem;
     font-weight: 300;
-    margin-bottom: 2rem;
+    margin-bottom: 0.5rem;
     opacity: 0;
     animation: fadeIn 1.5s ease-in forwards;
+}
+
+.tagline {
+    font-size: 1.2rem;
+    font-weight: 300;
+    margin-bottom: 2rem;
+    opacity: 0;
+    animation: fadeIn 1.5s ease-in 0.3s forwards;
+    color: #fbde02;
+    letter-spacing: 0.05em;
 }
 
 .nav-buttons {
@@ -231,8 +241,10 @@ body {
     max-width: 1200px;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
+    grid-auto-rows: auto;
     gap: 1.5rem;
     padding-bottom: 2rem;
+    grid-auto-flow: dense; /* This helps fill in gaps in the grid */
 }
 
 .photo-item {
@@ -241,6 +253,20 @@ body {
     overflow: hidden;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    grid-column: auto;
+    aspect-ratio: 2/3; /* Default aspect ratio for portrait photos */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.photo-item.landscape {
+    grid-column: span 2; /* Make landscape photos span 2 columns */
+    aspect-ratio: 3/2; /* Aspect ratio for landscape photos */
+}
+
+.photo-item.square {
+    aspect-ratio: 1/1; /* Perfect square aspect ratio */
 }
 
 .photo-item:hover {
@@ -250,8 +276,10 @@ body {
 
 .photo-image {
     width: 100%;
-    height: auto;
+    height: 100%;
     display: block;
+    object-fit: cover; /* This ensures the image covers the area without distortion */
+    object-position: center; /* Centers the image within its container */
 }
 
 @keyframes fadeInOut {
@@ -466,9 +494,10 @@ body {
     border-bottom: 16px solid #ffea00;
     pointer-events: none;
     z-index: 10000;
-    /* Simplified transition properties */
+    /* Remove transitions for snappier movement */
     transition: opacity 0.1s linear, border-bottom-color 0.1s linear;
     opacity: 1;
+    will-change: transform; /* Optimize for animations */
     /* Reduced shadow effect for better performance */
 }
 
@@ -548,6 +577,80 @@ body {
     100% { transform: scale(3); opacity: 0; }
 }
 
+/* Pricing Page Styles */
+.pricing-page {
+    padding: 5.5rem 2rem;
+    backdrop-filter: blur(15px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-y: auto;
+}
+
+.pricing-title {
+    font-size: 2rem;
+    font-weight: 300;
+    margin-bottom: 2rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    text-align: center;
+}
+
+.pricing-container {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.pricing-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 2rem;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.pricing-table th,
+.pricing-table td {
+    padding: 1.2rem 1.5rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pricing-table th {
+    background-color: rgba(251, 222, 2, 0.1);
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #fbde02;
+}
+
+.pricing-table tr:last-child td {
+    border-bottom: none;
+}
+
+.pricing-table tr:hover td {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.tier-standard {
+    color: #ffffff;
+}
+
+.tier-premium {
+    color: #fbde02;
+}
+
+.pricing-note {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-top: 1rem;
+    text-align: center;
+    max-width: 800px;
+}
+
 @media (max-width: 768px) {
     .logo {
         font-size: 2.5rem;
@@ -565,6 +668,12 @@ body {
     .photos-container {
         grid-template-columns: 1fr;
         gap: 1.5rem;
+    }
+    
+    .pricing-table th,
+    .pricing-table td {
+        padding: 0.8rem 1rem;
+        font-size: 0.9rem;
     }
 }
 
