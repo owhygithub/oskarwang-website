@@ -12,6 +12,184 @@ window.requestIdleCallback = window.requestIdleCallback || function(callback) {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Add event listeners to category elements
+    document.querySelectorAll('.portfolio-category').forEach(category => {
+        category.addEventListener('click', () => {
+            const categoryName = category.getAttribute('data-category');
+            showAlbumsForCategory(categoryName);
+        });
+    });
+});
+
+// Initialize preloader
+// Polyfill for requestIdleCallback for better browser support
+window.requestIdleCallback = window.requestIdleCallback || function(callback) {
+    const start = Date.now();
+    return setTimeout(function() {
+        callback({
+            didTimeout: false,
+            timeRemaining: function() {
+                return Math.max(0, 50 - (Date.now() - start));
+            }
+        });
+    }, 1);
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Hide preloader when page is loaded
+    window.addEventListener('load', () => {
+        const preloader = document.querySelector('.preloader');
+        preloader.style.opacity = '0';
+        setTimeout(() => {
+            preloader.style.display = 'none';
+        }, 500);
+    });
+});
+
+// Handle window popstate for browser back button
+window.addEventListener('popstate', (event) => {
+    if (event.state && event.state.page) {
+        showPage(event.state.page);
+    } else {
+        showPage('main');
+    }
+});
+
+// Additional portfolio navigation helpers
+function goBack() {
+    if (navigationStack.length <= 1) {
+        showPage('main');
+        return;
+    }
+    
+    // Remove current page from stack
+    navigationStack.pop();
+    
+    // Reset album view flag when navigating away from photos page
+    if (navigationStack[navigationStack.length - 1] !== 'portfolio-photos') {
+        isInAlbumView = false;
+    }
+    
+    // Go to previous page
+    const previousPage = navigationStack[navigationStack.length - 1];
+    
+    if (previousPage === 'portfolio') {
+        showPage('portfolio');
+    } else if (previousPage === 'portfolio-albums') {
+        showAlbumsForCategory(currentCategory);
+    } else if (previousPage === 'portfolio-photos') {
+        showPhotosForAlbum(currentCategory, currentAlbum);
+    } else {
+        showPage(previousPage);
+    }
+}
+
+// Optimized lightbox functionality for portfolio photos
+(function() {
+    // Create lightbox elements once and reuse them
+    const lightbox = document.createElement('div');
+    lightbox.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0,0,0,0.9);
+        display: none; /* Hidden by default */
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    `;
+    
+    const fullImg = document.createElement('img');
+    fullImg.style.maxWidth = '90%';
+    fullImg.style.maxHeight = '90%';
+    fullImg.style.transform = 'scale(0.95)';
+    fullImg.style.transition = 'transform 0.2s ease';
+    
+    lightbox.appendChild(fullImg);
+    document.body.appendChild(lightbox);
+    
+    // Show lightbox function with optimized animation
+    function showLightbox(imgSrc) {
+        fullImg.src = imgSrc;
+        lightbox.style.display = 'flex';
+        
+        // Force reflow before starting animation
+        void lightbox.offsetWidth;
+        
+        lightbox.style.opacity = '1';
+        fullImg.style.transform = 'scale(1)';
+    }
+    
+    // Hide lightbox function with optimized animation
+    function hideLightbox() {
+        lightbox.style.opacity = '0';
+        fullImg.style.transform = 'scale(0.95)';
+        
+        setTimeout(() => {
+            lightbox.style.display = 'none';
+        }, 200);
+    }
+    
+    // Event delegation for better performance
+    document.addEventListener('click', (e) => {
+        // Check if clicking on an image
+        if (e.target.classList.contains('photo-image') || e.target.classList.contains('album-image') || e.target.classList.contains('category-image')) {
+            // Don't show lightbox if clicking on category or album (they navigate instead)
+            if ((e.target.classList.contains('category-image') && e.target.closest('.portfolio-category')) ||
+                (e.target.classList.contains('album-image') && e.target.closest('.portfolio-album'))) {
+                return;
+            }
+            
+            showLightbox(e.target.src);
+        }
+        
+        // Check if clicking on the lightbox to close it
+        if (e.target === lightbox || e.target === fullImg) {
+            hideLightbox();
+        }
+    }, { passive: true });
+    
+    // Close lightbox with escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && lightbox.style.display === 'flex') {
+            hideLightbox();
+        }
+    });
+})();
+
+// Optimized parallax effect with throttling and RAF
+(function() {
+    let ticking = false;
+    let lastMouseX = 0;
+    let lastMouseY = 0;
+    const parallaxFactor = 0.005; // Reduced factor for better performance
+    
+    document.addEventListener('mousemove', (e) => {
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+        
+        if (!ticking) {
+            requestAnimationFrame(() => {
+                if (document.querySelector('.main-page.active-page')) {
+                    const mainPage = document.querySelector('.main-page');
+                    const moveX = (lastMouseX - window.innerWidth / 2) * parallaxFactor;
+                    const moveY = (lastMouseY - window.innerHeight / 2) * parallaxFactor;
+                    
+                    mainPage.style.backgroundPosition = `calc(50% + ${moveX}px) calc(50% + ${moveY}px)`;
+                }
+                ticking = false;
+            });
+            ticking = true;
+        }
+    }, { passive: true });
+})();
+
+document.addEventListener('DOMContentLoaded', () => {
     // Initialize custom cursor with highly optimized animation
     const cursor = document.querySelector('.cursor');
     
@@ -21,6 +199,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let speed = 0.9; // Much higher speed for snappy movement
     let albumViewSpeed = 1.0; // Even faster for album view
     
+    // Add variables for throttling cursor updates
+    let lastCursorUpdate = 0;
+    const cursorUpdateInterval = 16; // ~60fps, adjust as needed for performance
+    let lastCursorX = 0, lastCursorY = 0;
+    
     // Use a boolean flag for hover state instead of changing properties repeatedly
     let isHovering = false;
     let isInAlbumView = false;
@@ -29,9 +212,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const baseTransform = 'translate(-50%, -50%) rotate(-45deg)';
     
     // Highly optimized animation function for snappy cursor movement
-    function animateCursor() {
-        // Only calculate position when cursor is visible
-        if (cursor.style.opacity !== '0') {
+    function animateCursor(timestamp) {
+        // Skip calculation if not enough time has passed (throttling)
+        if (timestamp - lastCursorUpdate < cursorUpdateInterval) {
+            requestAnimationFrame(animateCursor);
+            return;
+        }
+        
+        lastCursorUpdate = timestamp;
+        
+        // Only calculate position when cursor is visible and not in reduced motion mode
+        if (cursor.style.opacity !== '0' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
             // Use much faster speed for snappy movement
             const currentSpeed = isInAlbumView ? albumViewSpeed : speed;
             
@@ -40,7 +231,12 @@ document.addEventListener('DOMContentLoaded', () => {
             cursorY = mouseY - (mouseY - cursorY) * (1 - currentSpeed);
             
             // Use translate3d for hardware acceleration with minimal string concatenation
-            cursor.style.transform = `translate3d(${cursorX}px, ${cursorY}px, 0) ${baseTransform}`;
+            // Only update transform if position has changed significantly
+            if (Math.abs(cursorX - lastCursorX) > 0.5 || Math.abs(cursorY - lastCursorY) > 0.5) {
+                cursor.style.transform = `translate3d(${cursorX}px, ${cursorY}px, 0) ${baseTransform}`;
+                lastCursorX = cursorX;
+                lastCursorY = cursorY;
+            }
         }
         
         requestAnimationFrame(animateCursor);
@@ -67,7 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Apply transform directly for maximum responsiveness
         cursor.style.transform = `translate3d(${cursorX}px, ${cursorY}px, 0) ${baseTransform}`;
-    }, { passive: true }); // Use passive listener for better performance
+    }, { passive: true });
     
     // Hide cursor when mouse leaves the window
     document.addEventListener('pointerleave', () => {
@@ -183,7 +379,20 @@ document.addEventListener('DOMContentLoaded', () => {
                         tempImage.onload = () => {
                             // Only update the DOM after image is loaded
                             img.src = img.dataset.src;
+                            
+                            // Add srcset if available
+                            if (img.dataset.srcset) {
+                                img.srcset = img.dataset.srcset;
+                            }
+                            
                             img.classList.add('loaded');
+                            
+                            // Decode image asynchronously for smoother rendering
+                            if ('decode' in img) {
+                                img.decode().catch(() => {
+                                    // Silent catch - continue even if decode fails
+                                });
+                            }
                         };
                         tempImage.src = img.dataset.src;
                         
@@ -193,17 +402,32 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     }, {
-        rootMargin: '200px 0px', // Load images before they appear in viewport
+        rootMargin: '300px 0px', // Increased margin to load images earlier
         threshold: 0.01 // Trigger with minimal visibility
     });
 
     // Observe images in batches to avoid performance spikes
     if (lazyImages.length > 0) {
+        // Use a more efficient batching approach
+        const batchSize = 5; // Process 5 images at a time
+        const processBatch = (startIndex) => {
+            const endIndex = Math.min(startIndex + batchSize, lazyImages.length);
+            
+            for (let i = startIndex; i < endIndex; i++) {
+                imageObserver.observe(lazyImages[i]);
+            }
+            
+            if (endIndex < lazyImages.length) {
+                requestIdleCallback(() => {
+                    processBatch(endIndex);
+                }, { timeout: 500 });
+            }
+        };
+        
+        // Start processing the first batch
         requestIdleCallback(() => {
-            lazyImages.forEach(image => {
-                imageObserver.observe(image);
-            });
-        }, { timeout: 1000 });
+            processBatch(0);
+        }, { timeout: 800 });
     }
 
     // Handle initial page load
@@ -296,46 +520,117 @@ function showAlbumsForCategory(category) {
     // Clear existing albums
     albumsGrid.innerHTML = '';
     
+    // Show loading indicator
+    const loadingElement = document.createElement('div');
+    loadingElement.className = 'loading-indicator';
+    loadingElement.textContent = 'Loading albums...';
+    albumsGrid.appendChild(loadingElement);
+    
     // Get albums for this category
     const categoryAlbums = portfolioData[category];
     
-    // Create album elements
-    Object.keys(categoryAlbums).forEach(albumName => {
-        // Get photos for this album - we'll use the Promise version now
-        getPhotosFromFolder(category, albumName).then(photos => {
-            if (photos.length === 0) {
-                console.warn(`No photos found for ${category}/${albumName}`);
-                return; // Skip this album if no photos
-            }
+    // Create a document fragment to batch DOM operations
+    const fragment = document.createDocumentFragment();
+    
+    // Track loaded albums to handle error message
+    let loadedAlbumCount = 0;
+    const totalAlbums = Object.keys(categoryAlbums).length;
+    
+    // Process albums in batches to prevent UI blocking
+    const processAlbumBatch = (albumNames, startIndex, batchSize) => {
+        const endIndex = Math.min(startIndex + batchSize, albumNames.length);
+        
+        // Process current batch
+        for (let i = startIndex; i < endIndex; i++) {
+            const albumName = albumNames[i];
             
-            // Use custom thumbnail if specified, otherwise use first photo
-            const albumData = categoryAlbums[albumName];
-            const coverImage = albumData.thumbnail || photos[0];
-            const albumDir = albumName.toLowerCase().replace(/ /g, '_').replace(/&/g, 'and');
-            
-            const albumElement = document.createElement('div');
-            albumElement.className = 'portfolio-album';
-            albumElement.setAttribute('data-album', albumName);
-            
-            albumElement.innerHTML = `
-                <div class="album-overlay">
-                    <h3>${albumName}</h3>
-                </div>
-                <img src="images/${category}/${albumDir}/${coverImage}" alt="${albumName}" class="album-image">
-            `;
-            
-            albumElement.addEventListener('click', () => {
-                showPhotosForAlbum(category, albumName);
+            // Get photos for this album - we'll use the Promise version now
+            getPhotosFromFolder(category, albumName).then(photos => {
+                loadedAlbumCount++;
+                
+                if (photos.length === 0) {
+                    console.warn(`No photos found for ${category}/${albumName}`);
+                    
+                    // Check if all albums have been processed
+                    if (loadedAlbumCount === totalAlbums) {
+                        // Remove loading indicator
+                        const loadingIndicator = albumsGrid.querySelector('.loading-indicator');
+                        if (loadingIndicator) loadingIndicator.remove();
+                        
+                        // Show error message if no albums were loaded
+                        if (albumsGrid.children.length === 0) {
+                            albumsGrid.innerHTML = '<div class="error-message">No albums found for this category.</div>';
+                        }
+                    }
+                    return; // Skip this album if no photos
+                }
+                
+                // Use custom thumbnail if specified, otherwise use first photo
+                const albumData = categoryAlbums[albumName];
+                const coverImage = albumData.thumbnail || photos[0];
+                const albumDir = albumName.toLowerCase().replace(/ /g, '_').replace(/&/g, 'and');
+                
+                const albumElement = document.createElement('div');
+                albumElement.className = 'portfolio-album';
+                albumElement.setAttribute('data-album', albumName);
+                
+                // Create elements separately for better performance
+                const overlay = document.createElement('div');
+                overlay.className = 'album-overlay';
+                
+                const title = document.createElement('h3');
+                title.textContent = albumName;
+                overlay.appendChild(title);
+                
+                const img = document.createElement('img');
+                // Use a tiny SVG placeholder initially
+                img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"%3E%3C/svg%3E';
+                img.setAttribute('data-src', `images/${category}/${albumDir}/${coverImage}`);
+                img.alt = albumName;
+                img.className = 'album-image';
+                img.decoding = 'async'; // Use async decoding for better performance
+                
+                // Load the actual image
+                const tempImage = new Image();
+                tempImage.onload = () => {
+                    requestAnimationFrame(() => {
+                        img.src = tempImage.src;
+                        img.classList.add('loaded');
+                    });
+                };
+                tempImage.src = `images/${category}/${albumDir}/${coverImage}`;
+                
+                albumElement.appendChild(overlay);
+                albumElement.appendChild(img);
+                
+                albumElement.addEventListener('click', () => {
+                    showPhotosForAlbum(category, albumName);
+                });
+                
+                fragment.appendChild(albumElement);
+                
+                // Check if all albums have been processed
+                if (loadedAlbumCount === totalAlbums) {
+                    // Remove loading indicator
+                    const loadingIndicator = albumsGrid.querySelector('.loading-indicator');
+                    if (loadingIndicator) loadingIndicator.remove();
+                    
+                    // Append the fragment to the grid
+                    albumsGrid.appendChild(fragment);
+                }
             });
-            
-            albumsGrid.appendChild(albumElement);
-            
-            // Check if we need to show an error message after all albums have been processed
-            if (albumsGrid.children.length === 0 && Object.keys(categoryAlbums).length === Object.keys(categoryAlbums).indexOf(albumName) + 1) {
-                albumsGrid.innerHTML = '<div class="error-message">No albums found for this category.</div>';
-            }
-        });
-    });
+        }
+        
+        // If there are more albums to process, schedule the next batch
+        if (endIndex < albumNames.length) {
+            requestIdleCallback(() => {
+                processAlbumBatch(albumNames, endIndex, batchSize);
+            }, { timeout: 50 });
+        }
+    };
+    
+    // Start processing in batches of 3 albums
+    processAlbumBatch(Object.keys(categoryAlbums), 0, 3);
     
     // Show the albums page
     const allPages = document.querySelectorAll('.page');
@@ -388,38 +683,106 @@ function showPhotosForAlbum(category, album) {
         // Map album name to directory name
         const albumDir = album.toLowerCase().replace(/ /g, '_').replace(/&/g, 'and');
         
-        photos.forEach(photo => {
-            const photoElement = document.createElement('div');
-            photoElement.className = 'photo-item';
+        // Create a document fragment to batch DOM operations
+        const fragment = document.createDocumentFragment();
+        
+        // Process photos in batches to prevent UI blocking
+        const processBatch = (startIndex, batchSize) => {
+            const endIndex = Math.min(startIndex + batchSize, photos.length);
             
-            // Create the image element
-            const img = document.createElement('img');
-            img.src = `images/${category}/${albumDir}/${photo}`;
-            img.alt = `${album} photo`;
-            img.className = 'photo-image';
-            
-            // Check if the image is landscape after it loads with improved ratio detection
-            img.onload = function() {
-                const ratio = this.naturalWidth / this.naturalHeight;
+            for (let i = startIndex; i < endIndex; i++) {
+                const photo = photos[i];
+                const photoElement = document.createElement('div');
+                photoElement.className = 'photo-item';
                 
-                // More precise landscape detection with a slight threshold
-                if (ratio > 1.2) {
-                    // This is a landscape photo
-                    photoElement.classList.add('landscape');
-                } else if (ratio > 0.8 && ratio < 1.2) {
-                    // This is a square-ish photo, handle differently
-                    photoElement.classList.add('square');
-                }
+                // Create the image element with a tiny placeholder initially
+                const img = document.createElement('img');
+                img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"%3E%3C/svg%3E';
+                img.setAttribute('data-src', `images/${category}/${albumDir}/${photo}`);
+                img.alt = `${album} photo`;
+                img.className = 'photo-image';
+                img.loading = 'lazy'; // Use native lazy loading as additional support
+                img.decoding = 'async'; // Use async decoding for better performance
+                
+                // Add progressive loading
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const target = entry.target;
+                            
+                            // Create a new image to preload without affecting page layout
+                            const tempImage = new Image();
+                            tempImage.onload = () => {
+                                // Only update the DOM after image is loaded
+                                requestAnimationFrame(() => {
+                                    target.src = target.dataset.src;
+                                    target.classList.add('loaded');
+                                    
+                                    // Decode image asynchronously for smoother rendering
+                                    if ('decode' in target) {
+                                        target.decode().catch(() => {
+                                            // Silent catch - continue even if decode fails
+                                        });
+                                    }
+                                });
+                            };
+                            tempImage.src = target.dataset.src;
+                            
+                            observer.unobserve(target);
+                        }
+                    });
+                }, {
+                    rootMargin: '200px 0px',
+                    threshold: 0.01
+                });
+                
+                observer.observe(img);
+                
+                // Check if the image is landscape after it loads with improved ratio detection
+                img.onload = function() {
+                    if (this.src.includes('data:image')) return; // Skip for placeholder
+                    
+                    const ratio = this.naturalWidth / this.naturalHeight;
+                    
+                    // More precise landscape detection with a slight threshold
+                    if (ratio > 1.2) {
+                        // This is a landscape photo
+                        photoElement.classList.add('landscape');
+                    } else if (ratio > 0.8 && ratio < 1.2) {
+                        // This is a square-ish photo, handle differently
+                        photoElement.classList.add('square');
+                    }
+                };
+                
+                photoElement.appendChild(img);
+                fragment.appendChild(photoElement);
+            }
+            
+            // If this is the first batch, append it immediately
+            if (startIndex === 0) {
+                photosContainer.appendChild(fragment.cloneNode(true));
+            }
+            
+            // Schedule next batch if needed
+            if (endIndex < photos.length) {
+                requestIdleCallback(() => {
+                    processBatch(endIndex, batchSize);
+                    // Append this batch to the container
+                    photosContainer.appendChild(fragment);
+                }, { timeout: 50 });
+            } else {
+                // Append final batch
+                photosContainer.appendChild(fragment);
                 
                 // Force a small layout recalculation to ensure grid alignment
-                setTimeout(() => {
+                requestAnimationFrame(() => {
                     window.dispatchEvent(new Event('resize'));
-                }, 50);
-            };
-            
-            photoElement.appendChild(img);
-            photosContainer.appendChild(photoElement);
-        });
+                });
+            }
+        };
+        
+        // Start processing with first batch of 6 photos
+        processBatch(0, 6);
 
     }).catch(error => {
         console.error('Error loading photos:', error);

@@ -682,3 +682,102 @@ body {
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
+/* Add styles for progressive image loading */
+.album-image, .category-image, .photo-image {
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.5s ease;
+    will-change: opacity, transform;
+    /* Add blur effect for progressive loading */
+    filter: blur(10px);
+}
+
+.album-image.loaded, .category-image.loaded, .photo-image.loaded {
+    opacity: 1;
+    filter: blur(0);
+}
+
+/* Optimize photo grid for better performance */
+.photos-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+    width: 100%;
+    /* Use content-visibility for better rendering performance */
+    content-visibility: auto;
+    contain: layout style paint;
+}
+
+.photo-item {
+    position: relative;
+    overflow: hidden;
+    border-radius: 5px;
+    background-color: rgba(0, 0, 0, 0.2); /* Placeholder color while loading */
+    min-height: 200px; /* Reserve space for image */
+    /* Use hardware acceleration */
+    will-change: transform;
+    transform: translateZ(0);
+}
+
+/* Add loading animation */
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.photo-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+    z-index: 1;
+}
+
+.photo-item:has(.photo-image.loaded)::before {
+    opacity: 0;
+}
+
+/* Optimize animations */
+.portfolio-category:hover, .portfolio-album:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    /* Use hardware acceleration */
+    will-change: transform;
+    /* Ensure text remains visible during hover */
+    z-index: 1;
+}
+
+/* Optimize preloader */
+.preloader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #121212;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    border-top-color: #fbde02;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
