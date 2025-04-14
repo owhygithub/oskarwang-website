@@ -16,6 +16,38 @@ body {
     cursor: none;
 }
 
+@media (hover: none) and (pointer: coarse) {
+    body {
+        cursor: auto;
+    }
+    
+    .nav-btn, .shop-btn, .back-btn, .submit-btn {
+        cursor: pointer;
+    }
+    
+    .cursor {
+        display: none;
+    }
+}
+
+body.touch-device {
+    cursor: auto;
+}
+
+body.touch-device .cursor {
+    display: none;
+}
+
+body.touch-device .nav-btn, 
+body.touch-device .shop-btn, 
+body.touch-device .back-btn, 
+body.touch-device .submit-btn,
+body.touch-device .portfolio-category,
+body.touch-device .portfolio-album,
+body.touch-device .photo-item {
+    cursor: pointer;
+}
+
 .page {
     position: fixed;
     top: 0;
@@ -292,6 +324,12 @@ body {
     /* max-width: 800px; */
     margin: 0 auto;
     backdrop-filter: blur(15px);
+}
+
+@media (max-width: 768px) {
+    .contact-page {
+        padding: 4rem 1.5rem;
+    }
 }
 
 .contact-content {
@@ -653,7 +691,12 @@ body {
 
 @media (max-width: 768px) {
     .logo {
-        font-size: 2.5rem;
+        font-size: 2rem;
+    }
+
+    .tagline {
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
     }
 
     .nav-buttons {
@@ -661,13 +704,19 @@ body {
         gap: 1rem;
     }
 
+    .nav-btn {
+        font-size: 1.1rem;
+        padding: 0.6rem 0;
+    }
+
     .contact-content {
         grid-template-columns: 1fr;
+        gap: 2rem;
     }
     
     .photos-container {
         grid-template-columns: 1fr;
-        gap: 1.5rem;
+        gap: 1rem;
     }
     
     .pricing-table th,
@@ -675,11 +724,82 @@ body {
         padding: 0.8rem 1rem;
         font-size: 0.9rem;
     }
+
+    .portfolio-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .portfolio-title {
+        font-size: 1.6rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .portfolio-page, .portfolio-albums-page, .portfolio-photos-page, .pricing-page, .contact-page {
+        padding: 4rem 1rem;
+    }
+
+    .profile-image-wrapper {
+        width: 100%;
+        max-width: 300px;
+        height: auto;
+        aspect-ratio: 3/4;
+    }
+
+    .social-links {
+        justify-content: center;
+    }
+
+    .social-link {
+        font-size: 3rem;
+    }
+
+    .custom-icon {
+        height: 50px;
+    }
+
+    .back-btn {
+        top: 1rem;
+        left: 1rem;
+        font-size: 0.9rem;
+    }
 }
 
 @media (min-width: 769px) and (max-width: 1024px) {
     .photos-container {
         grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .portfolio-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .logo {
+        font-size: 1.8rem;
+    }
+    
+    .tagline {
+        font-size: 0.9rem;
+    }
+    
+    .nav-btn {
+        font-size: 1rem;
+    }
+    
+    .portfolio-title, .pricing-title {
+        font-size: 1.4rem;
+    }
+    
+    .form-group input,
+    .form-group textarea {
+        padding: 0.7rem;
+    }
+    
+    .submit-btn {
+        width: 100%;
+        text-align: center;
     }
 }
 
@@ -706,6 +826,16 @@ body {
     /* Use content-visibility for better rendering performance */
     content-visibility: auto;
     contain: layout style paint;
+}
+
+@media (max-width: 480px) {
+    .photos-container {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    }
+    
+    .photo-item.landscape {
+        grid-column: auto; /* Reset landscape photos to single column on very small screens */
+    }
 }
 
 .photo-item {

@@ -44,6 +44,20 @@ document.addEventListener('DOMContentLoaded', () => {
             preloader.style.display = 'none';
         }, 500);
     });
+    
+    // Detect if device is touch-enabled
+    const isTouchDevice = () => {
+        return ('ontouchstart' in window) || 
+               (navigator.maxTouchPoints > 0) || 
+               (navigator.msMaxTouchPoints > 0);
+    };
+    
+    // Disable custom cursor on touch devices
+    if (isTouchDevice()) {
+        document.body.classList.add('touch-device');
+        const cursor = document.querySelector('.cursor');
+        if (cursor) cursor.style.display = 'none';
+    }
 });
 
 // Handle window popstate for browser back button
@@ -1060,6 +1074,20 @@ document.addEventListener('DOMContentLoaded', () => {
             preloader.style.display = 'none';
         }, 500);
     });
+    
+    // Detect if device is touch-enabled
+    const isTouchDevice = () => {
+        return ('ontouchstart' in window) || 
+               (navigator.maxTouchPoints > 0) || 
+               (navigator.msMaxTouchPoints > 0);
+    };
+    
+    // Disable custom cursor on touch devices
+    if (isTouchDevice()) {
+        document.body.classList.add('touch-device');
+        const cursor = document.querySelector('.cursor');
+        if (cursor) cursor.style.display = 'none';
+    }
 });
 
 // Handle window popstate for browser back button
