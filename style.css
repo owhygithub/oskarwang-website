@@ -16,38 +16,6 @@ body {
     cursor: none;
 }
 
-@media (hover: none) and (pointer: coarse) {
-    body {
-        cursor: auto;
-    }
-    
-    .nav-btn, .shop-btn, .back-btn, .submit-btn {
-        cursor: pointer;
-    }
-    
-    .cursor {
-        display: none;
-    }
-}
-
-body.touch-device {
-    cursor: auto;
-}
-
-body.touch-device .cursor {
-    display: none;
-}
-
-body.touch-device .nav-btn, 
-body.touch-device .shop-btn, 
-body.touch-device .back-btn, 
-body.touch-device .submit-btn,
-body.touch-device .portfolio-category,
-body.touch-device .portfolio-album,
-body.touch-device .photo-item {
-    cursor: pointer;
-}
-
 .page {
     position: fixed;
     top: 0;
@@ -326,12 +294,6 @@ body.touch-device .photo-item {
     backdrop-filter: blur(15px);
 }
 
-@media (max-width: 768px) {
-    .contact-page {
-        padding: 4rem 1.5rem;
-    }
-}
-
 .contact-content {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -532,8 +494,8 @@ body.touch-device .photo-item {
     border-bottom: 16px solid #ffea00;
     pointer-events: none;
     z-index: 10000;
-    /* Remove transitions for snappier movement */
-    transition: opacity 0.1s linear, border-bottom-color 0.1s linear;
+    /* Improved transition for smoother movement */
+    transition: opacity 0.1s linear, border-bottom-color 0.1s linear, transform 0.05s linear;
     opacity: 1;
     will-change: transform; /* Optimize for animations */
     /* Reduced shadow effect for better performance */
@@ -691,12 +653,7 @@ body.touch-device .photo-item {
 
 @media (max-width: 768px) {
     .logo {
-        font-size: 2rem;
-    }
-
-    .tagline {
-        font-size: 1rem;
-        margin-bottom: 1.5rem;
+        font-size: 2.5rem;
     }
 
     .nav-buttons {
@@ -704,63 +661,18 @@ body.touch-device .photo-item {
         gap: 1rem;
     }
 
-    .nav-btn {
-        font-size: 1.1rem;
-        padding: 0.6rem 0;
-    }
-
     .contact-content {
         grid-template-columns: 1fr;
-        gap: 2rem;
     }
     
     .photos-container {
         grid-template-columns: 1fr;
-        gap: 1rem;
+        gap: 1.5rem;
     }
     
     .pricing-table th,
     .pricing-table td {
         padding: 0.8rem 1rem;
-        font-size: 0.9rem;
-    }
-
-    .portfolio-grid {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-    }
-
-    .portfolio-title {
-        font-size: 1.6rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .portfolio-page, .portfolio-albums-page, .portfolio-photos-page, .pricing-page, .contact-page {
-        padding: 4rem 1rem;
-    }
-
-    .profile-image-wrapper {
-        width: 100%;
-        max-width: 300px;
-        height: auto;
-        aspect-ratio: 3/4;
-    }
-
-    .social-links {
-        justify-content: center;
-    }
-
-    .social-link {
-        font-size: 3rem;
-    }
-
-    .custom-icon {
-        height: 50px;
-    }
-
-    .back-btn {
-        top: 1rem;
-        left: 1rem;
         font-size: 0.9rem;
     }
 }
@@ -769,145 +681,4 @@ body.touch-device .photo-item {
     .photos-container {
         grid-template-columns: repeat(2, 1fr);
     }
-    
-    .portfolio-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 480px) {
-    .logo {
-        font-size: 1.8rem;
-    }
-    
-    .tagline {
-        font-size: 0.9rem;
-    }
-    
-    .nav-btn {
-        font-size: 1rem;
-    }
-    
-    .portfolio-title, .pricing-title {
-        font-size: 1.4rem;
-    }
-    
-    .form-group input,
-    .form-group textarea {
-        padding: 0.7rem;
-    }
-    
-    .submit-btn {
-        width: 100%;
-        text-align: center;
-    }
-}
-
-/* Add styles for progressive image loading */
-.album-image, .category-image, .photo-image {
-    opacity: 0;
-    transition: opacity 0.3s ease, transform 0.5s ease;
-    will-change: opacity, transform;
-    /* Add blur effect for progressive loading */
-    filter: blur(10px);
-}
-
-.album-image.loaded, .category-image.loaded, .photo-image.loaded {
-    opacity: 1;
-    filter: blur(0);
-}
-
-/* Optimize photo grid for better performance */
-.photos-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1rem;
-    width: 100%;
-    /* Use content-visibility for better rendering performance */
-    content-visibility: auto;
-    contain: layout style paint;
-}
-
-@media (max-width: 480px) {
-    .photos-container {
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    }
-    
-    .photo-item.landscape {
-        grid-column: auto; /* Reset landscape photos to single column on very small screens */
-    }
-}
-
-.photo-item {
-    position: relative;
-    overflow: hidden;
-    border-radius: 5px;
-    background-color: rgba(0, 0, 0, 0.2); /* Placeholder color while loading */
-    min-height: 200px; /* Reserve space for image */
-    /* Use hardware acceleration */
-    will-change: transform;
-    transform: translateZ(0);
-}
-
-/* Add loading animation */
-@keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
-}
-
-.photo-item::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.08), rgba(255,255,255,0.03));
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-    opacity: 1;
-    transition: opacity 0.3s ease;
-    z-index: 1;
-}
-
-.photo-item:has(.photo-image.loaded)::before {
-    opacity: 0;
-}
-
-/* Optimize animations */
-.portfolio-category:hover, .portfolio-album:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    /* Use hardware acceleration */
-    will-change: transform;
-    /* Ensure text remains visible during hover */
-    z-index: 1;
-}
-
-/* Optimize preloader */
-.preloader {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: #121212;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-    transition: opacity 0.5s ease;
-}
-
-.spinner {
-    width: 50px;
-    height: 50px;
-    border: 3px solid rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    border-top-color: #fbde02;
-    animation: spin 1s ease-in-out infinite;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
 }
