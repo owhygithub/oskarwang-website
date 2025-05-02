@@ -409,6 +409,9 @@ body {
     font-family: 'Urbanist', sans-serif;
     font-size: 1rem;
     transition: all 0.3s ease;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .form-group input:focus,
@@ -420,18 +423,19 @@ body {
 }
 
 .submit-btn {
-    padding: 0.8rem 1.5rem;
-    background-color: transparent;
-    border: 1px solid #ffffff;
+    padding: 1rem 2rem;
+    background-color: #fbde02;
+    color: #0a0a0a;
+    border: none;
     border-radius: 4px;
-    color: #ffffff;
-    font-family: 'Urbanist', sans-serif;
     font-size: 1rem;
-    font-weight: 400;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    margin-top: 0.5rem;
     align-self: flex-start;
+    margin-top: 1rem;
+    min-height: 48px; /* Minimum touch target size */
+    box-shadow: 0 2px 8px rgba(251, 222, 2, 0.2);
 }
 
 .submit-btn:hover {
@@ -633,6 +637,61 @@ body {
     .tagline {
         font-size: 0.9rem;
     }
+    
+    /* Enhanced contact page for very small screens */
+    .contact-page {
+        padding: 4rem 0.75rem 1.5rem;
+    }
+    
+    .contact-content {
+        gap: 2rem;
+    }
+    
+    .profile-container {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .profile-image-wrapper {
+        margin-bottom: 1rem;
+    }
+    
+    .social-links {
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    /* Enhanced pricing page for very small screens */
+    .pricing-table th,
+    .pricing-table td {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.8rem;
+    }
+    
+    .pricing-title {
+        font-size: 1.6rem;
+        margin-bottom: 1.2rem;
+    }
+    
+    /* Improve form elements touch targets */
+    .form-group label {
+        margin-bottom: 0.4rem;
+        font-size: 0.9rem;
+    }
+    
+    .form-group input,
+    .form-group textarea {
+        padding: 0.9rem;
+        border-radius: 8px;
+    }
+    
+    .submit-btn {
+        padding: 1rem;
+        border-radius: 8px;
+        font-size: 1rem;
+    }
 }
 
 @keyframes spin {
@@ -730,6 +789,7 @@ body {
 
     .contact-content {
         grid-template-columns: 1fr;
+        padding: 1rem;
     }
     
     .photos-container {
@@ -737,10 +797,62 @@ body {
         gap: 1.5rem;
     }
     
+    /* Improved pricing table for mobile */
+    .pricing-table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0 0.5rem;
+        white-space: nowrap;
+        border-radius: 6px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .pricing-container {
+        padding: 0 0.5rem;
+    }
+    
     .pricing-table th,
     .pricing-table td {
         padding: 0.8rem 1rem;
         font-size: 0.9rem;
+    }
+    
+    /* Contact form improvements */
+    .contact-form-container {
+        padding: 1rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .form-group input,
+    .form-group textarea {
+        padding: 0.8rem;
+        font-size: 1rem;
+    }
+    
+    .submit-btn {
+        padding: 0.8rem 1.5rem;
+        width: 100%;
+        margin-top: 1rem;
+    }
+    
+    /* Pricing page improvements */
+    .pricing-page {
+        padding: 4rem 1rem 2rem;
+    }
+    
+    .pricing-title {
+        font-size: 1.8rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .pricing-note {
+        padding: 0 1rem;
+        font-size: 0.85rem;
+        line-height: 1.4;
     }
 }
 

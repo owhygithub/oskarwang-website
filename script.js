@@ -30,6 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
         activeElements.forEach(el => el.classList.remove('touch-active'));
     }, { passive: true });
     
+    // Call the function to handle initial page load
+    handleInitialPageLoad();
 });
     
     // Optimized ripple effect using event delegation
@@ -124,9 +126,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }, { timeout: 1000 });
     }
 
-    // Handle initial page load
-    const hash = window.location.hash.replace('#', '');
-    if (hash && document.querySelector(`.${hash}-page`)) {
+    // Handle initial page load - improved to better handle URL hash navigation
+    function handleInitialPageLoad() {
+        // Get the hash from the URL, removing the # symbol
+        let hash = window.location.hash.replace('#', '');
+        
+        // If there's no hash or the hash doesn't correspond to a valid page, default to main
+        if (!hash || !document.querySelector(`.${hash}-page`)) {
+            hash = 'main';
+        }
+        
+        // Show the appropriate page based on the hash
         showPage(hash);
     }
 
@@ -139,6 +149,16 @@ let navigationStack = [];
 function showPage(page) {
     const backBtn = document.querySelector('.back-btn');
     const allPages = document.querySelectorAll('.page');
+    
+    // Ensure the target page exists
+    const targetPage = document.querySelector(`.${page}-page`);
+    if (!targetPage) {
+        console.error(`Page ${page} not found, defaulting to main page`);
+        page = 'main';
+        // Try to get the main page instead
+        const mainPage = document.querySelector('.main-page');
+        if (!mainPage) return; // Safety check
+    }
     
     // Reset album view flag when not in photos page
     if (page !== 'portfolio-photos') {
@@ -153,7 +173,8 @@ function showPage(page) {
         element.classList.remove('active-page');
     });
 
-    const targetPage = document.querySelector(`.${page}-page`);
+    // Get the target page again in case it was changed to main
+    const pageToShow = document.querySelector(`.${page}-page`);
     
     // For overlay pages (like contact), don't hide the main page
     if (page === 'contact') {
@@ -168,22 +189,38 @@ function showPage(page) {
         navigationStack = ['main', 'portfolio'];
     }
     
-    targetPage.classList.add('active-page');
+    pageToShow.classList.add('active-page');
 
     // Toggle back button visibility and functionality
     if (page === 'main') {
         backBtn.classList.remove('visible');
+        // Use replaceState to avoid adding to browser history
         history.replaceState({ page }, document.title, window.location.pathname);
         navigationStack = [];
     } else {
         backBtn.classList.add('visible');
-        history.pushState({ page }, document.title, `#${page}`);
+        // Only push state if we're not already on this page (prevents duplicate history entries)
+        const currentState = history.state;
+        if (!currentState || currentState.page !== page) {
+            // Update URL hash and browser history
+            history.pushState({ page }, document.title, `#${page}`);
+        } else {
+            // Ensure the URL hash matches the current page even if we didn't push state
+            if (window.location.hash !== `#${page}`) {
+                history.replaceState({ page }, document.title, `#${page}`);
+            }
+        }
         
         // Add to navigation stack if not already there
         if (!navigationStack.includes(page)) {
             navigationStack.push(page);
+        } else if (navigationStack[navigationStack.length - 1] !== page) {
+            // If page is in stack but not at the end, rebuild stack up to this page
+            const pageIndex = navigationStack.indexOf(page);
+            navigationStack = navigationStack.slice(0, pageIndex + 1);
         }
     }
+
 }
 
 // Add this with other functions
@@ -192,10 +229,41 @@ function redirectToShop() {
     window.open('https://www.saatchiart.com/account/profile/2746365', '_blank');
 }
 
+// Improved goBack function to work with browser history
+function goBack() {
+    // If we have a navigation stack with more than one item
+    if (navigationStack.length > 1) {
+        // Remove the current page from the stack
+        navigationStack.pop();
+        // Get the previous page
+        const previousPage = navigationStack[navigationStack.length - 1];
+        // Go back in browser history instead of directly calling showPage
+        // This ensures the browser's back button works correctly
+        history.back();
+    } else {
+        // If we're at the root of our navigation, go to main page
+        showPage('main');
+    }
+}
+
 // Add click handler for back button
 document.querySelector('.back-btn').addEventListener('click', () => {
     // Use our goBack function to navigate through the hierarchy
     goBack();
+});
+
+// Handle hash changes for direct navigation via URL
+window.addEventListener('hashchange', function() {
+    handleInitialPageLoad();
+});
+
+// Handle browser back/forward navigation
+window.addEventListener('popstate', function(event) {
+    if (event.state && event.state.page) {
+        showPage(event.state.page);
+    } else {
+        handleInitialPageLoad();
+    }
 });
 
 // Portfolio navigation functions
@@ -484,14 +552,39 @@ function getFallbackPhotoCollections() {
                 "DSC06736.jpg"
                 
             ],
-            'Friends & Family': [
-                '55-DSC06358.jpg', '57-DSC06368.jpg', 'DSC00622.jpg', 'DSC02967.jpg', 'DSC02982.jpg',
-                'DSC03078.jpg', 'DSC03094.jpg', 'DSC03558.jpg', 'DSC05104.jpg', 'DSC05137.jpg',
-                'DSC05146.jpg', 'DSC05229.jpg', 'DSC05385.jpg', 'DSC05645.jpg', 'DSC06304.jpg',
-                'DSC07874.JPG', 'IMG_0759.jpg', 'IMG_0806.jpg', 'IMG_0841.jpg', 'IMG_0909.jpg',
-                'IMG_8975.jpg', 'IMG_9162.jpg', 'IMG_9163.jpg', 'IMG_9389.jpg', 'IMG_9397.jpg',
-                'IMG_9413.jpg', 'IMG_9459.jpg', 'IMG_9488.jpg', 'IMG_9818.jpg'
-            ]
+            'Friends & Family': image_files = [
+                "DSC02459.jpg",
+                "DSC02461.jpg",
+                "DSC05645.jpg",
+                "DSC05385.jpg",
+                "DSC05229.jpg",
+                "DSC05146.jpg",
+                "DSC05137.jpg",
+                "DSC05104.jpg",
+                "IMG_0909.jpg",
+                "IMG_0841.jpg",
+                "IMG_0806.jpg",
+                "IMG_0759.jpg",
+                "IMG_9818.jpg",
+                "hana_2021_amsterdam-8.jpg",
+                "hana_2021_amsterdam-14.jpg",
+                "IMG_9488.jpg",
+                "IMG_9459.jpg",
+                "IMG_9389.jpg",
+                "IMG_9397.jpg",
+                "IMG_9413.jpg",
+                "IMG_8975.jpg",
+                "DSC03094.jpg",
+                "DSC02982.jpg",
+                "DSC06304.jpg",
+                "DSC00622.jpg",
+                "DSC03558.jpg",
+                "DSC03078.jpg",
+                "DSC02967.jpg",
+                "55-DSC06358.jpg",
+                "57-DSC06368.jpg",
+                "DSC07874.JPG"
+            ]            
         },
         events: {
             'Public Events': [
@@ -652,6 +745,14 @@ document.addEventListener('DOMContentLoaded', () => {
             showAlbumsForCategory(categoryName);
         });
     });
+    
+    // Handle initial page load based on URL hash
+    handleInitialPageLoad();
+    
+    // Set initial history state for the main page if no hash is present
+    if (!window.location.hash) {
+        history.replaceState({ page: 'main' }, document.title, window.location.pathname);
+    }
 });
 
 // Initialize preloader
@@ -670,13 +771,18 @@ window.requestIdleCallback = window.requestIdleCallback || function(callback) {
 
 document.addEventListener('DOMContentLoaded', () => {
     // Hide preloader when page is loaded
-    window.addEventListener('load', () => {
+    const hidePreloader = () => {
         const preloader = document.querySelector('.preloader');
         preloader.style.opacity = '0';
         setTimeout(() => {
             preloader.style.display = 'none';
         }, 500);
-    });
+    };
+    
+    // Hide preloader on both DOMContentLoaded and window load events
+    // This ensures it works on both initial load and page refresh
+    hidePreloader();
+    window.addEventListener('load', hidePreloader);
 });
 
 // Handle window popstate for browser back button
