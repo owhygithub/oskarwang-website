@@ -588,15 +588,45 @@ function getFallbackPhotoCollections() {
         },
         events: {
             'Public Events': [
-                'DSC02411.jpg', 'DSC02547.jpg', 'DSC02600.jpg', 'DSC02602.jpg', 'DSC02625.jpg',
-                'DSC02712.jpg', 'IMG_7307.jpg', 'IMG_7312.jpg', 'IMG_9652.jpg'
+                "DSC02543.jpg",
+                "DSC02490.jpg",
+                "DSC02501.jpg",
+                "DSC02506.jpg",
+                "DSC02519.jpg",
+                "DSC02566.jpg",
+                "DSC02582.jpg",
+                "DSC02712.jpg",
+                "DSC02602.jpg",
+                "DSC02625.jpg",
+                "DSC02600.jpg",
+                "DSC02547.jpg",
+                "DSC02411.jpg",
+                "IMG_7312.jpg",
+                "IMG_7307.jpg",
+                "IMG_9652.jpg"
             ],
             'Private Events': [
-                'DSC04801.jpg', 'DSC05173.jpg', 'DSC08511.jpg', 'DSC08647.jpg', 'DSC08701.jpg',
-                'DSC08732.jpg', 'DSC08878.jpg', 'HalloweenParty44.jpg', 'HalloweenParty49.jpg',
-                'IMG_1848.jpg', 'IMG_5270closeup.jpg', '_DSC0006.JPG', '_DSC0062.JPG', '_DSC0201.JPG',
-                '_DSC0206.JPG', '_MG_5254.jpg', 'bday-60th-166.jpg', 'bday-60th-167.jpg',
-                'bday-60th-4.jpg', 'bday-60th-40.jpg', 'bday-60th-6.jpg'
+                "bday-60th-167.jpg",
+                "bday-60th-166.jpg",
+                "DSC08732.jpg",
+                "DSC08511.jpg",
+                "DSC08878.jpg",
+                "DSC08701.jpg",
+                "DSC08647.jpg",
+                "IMG_5270closeup.jpg",
+                "_MG_5254.jpg",
+                "IMG_1848.jpg",
+                "_DSC0062.JPG",
+                "_DSC0201.JPG",
+                "_DSC0206.JPG",
+                "_DSC0006.JPG",
+                "HalloweenParty49.jpg",
+                "HalloweenParty44.jpg",
+                "DSC05173.jpg",
+                "DSC04801.jpg",
+                "bday-60th-40.jpg",
+                "bday-60th-6.jpg",
+                "bday-60th-4.jpg"
             ],
             'Brands': [
                 'DSC05724.jpg', 'DSC05731.jpg', 'DSC05759.jpg'
