@@ -451,10 +451,9 @@ function showPhotosForAlbum(category, album) {
 }
 
 
-// Helper function to get image files from a folder - dynamically scans for new photos
+// Helper function to get image files from a folder - fetches from GitHub repository
 function getPhotosFromFolder(category, album) {
-    // Return a Promise to make this function compatible with the async usage in showPhotosForAlbum
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         // Map album names to directory names for proper path construction
         const albumDirMap = {
             'Street Stories': 'street_stories',
@@ -474,222 +473,44 @@ function getPhotosFromFolder(category, album) {
         // Convert album name to directory name
         const albumDir = albumDirMap[album] || album.toLowerCase().replace(/ /g, '_').replace(/&/g, 'and');
         
-        // Add a cache buster to prevent caching issues with corrupt images
-        const cacheBuster = `?t=${new Date().getTime()}`;
+        // Construct the GitHub API URL to fetch directory contents
+        const githubAPIUrl = `https://api.github.com/repos/owhygithub/oskarwang-website/contents/images/${category}/${albumDir}`;
         
-        // Use our PHP script to scan the directory for images
-        fetch(`scan_images.php?category=${encodeURIComponent(category)}&album=${encodeURIComponent(album)}${cacheBuster}`)
+        // Add cache buster to prevent caching issues
+        const cacheBuster = `?timestamp=${Date.now()}`;
+        
+        // Fetch the directory listing from GitHub API
+        fetch(githubAPIUrl + cacheBuster)
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(`Failed to fetch images: ${response.statusText}`);
+                    throw new Error(`GitHub API error: ${response.status}`);
                 }
                 return response.json();
             })
             .then(data => {
-                if (data.error) {
-                    throw new Error(data.error);
-                }
+                // Filter for image files only
+                const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.JPG', '.JPEG', '.PNG', '.GIF'];
+                const images = data
+                    .filter(file => 
+                        file.type === 'file' && 
+                        imageExtensions.some(ext => file.name.toLowerCase().endsWith(ext.toLowerCase()))
+                    )
+                    .map(file => file.name);
                 
-                if (data.images && data.images.length > 0) {
-                    // Successfully got images from the server
-                    resolve(data.images);
+                if (images.length > 0) {
+                    console.log(`Found ${images.length} images for ${category}/${album}`);
+                    resolve(images);
                 } else {
-                    // No images found, use fallback
-                    console.warn(`No images found for ${category}/${album}, using fallback data`);
-                    const fallbackCollections = getFallbackPhotoCollections();
-                    if (fallbackCollections[category] && fallbackCollections[category][album]) {
-                        resolve(fallbackCollections[category][album]);
-                    } else {
-                        resolve([]);
-                    }
+                    throw new Error(`No images found in GitHub repository for ${category}/${album}`);
                 }
             })
             .catch(error => {
-                console.error('Error fetching images:', error);
-                // Fallback to hardcoded collections if fetch fails
-                const fallbackCollections = getFallbackPhotoCollections();
-                if (fallbackCollections[category] && fallbackCollections[category][album]) {
-                    resolve(fallbackCollections[category][album]);
-                } else {
-                    resolve([]);
-                }
+                console.warn(`Error fetching from GitHub: ${error.message}`);
+                console.warn(`Falling back to static image list for ${category}/${album}`);
             });
     });
 }
 
-// Fallback photo collections in case dynamic loading fails
-function getFallbackPhotoCollections() {
-    return {
-        photojournalism: {
-            'Street Stories': [
-                '081.jpg', 'DSC00533.jpg', 'DSC00559.jpg', 'DSC00582.jpg', 'DSC01128.jpg',
-                'DSC01486.jpg', 'DSC01497.jpg', 'DSC01512.jpg', 'DSC01576.jpg', 'DSC02048.jpg',
-                'DSC02923.jpg', 'DSC06358.jpg', 'DSC06666.jpg', 'DSC07065.JPG', 'DSC07825.JPG',
-                'DSC07839.JPG', 'DSC08003.JPG', 'IMG_0220.jpg', 'IMG_8109.jpg', 'IMG_8158.jpg',
-                'IMG_8497.jpg', 'IMG_8711.jpg', 'IMG_9456.jpg', 'IMG_9502.jpg', 'IMG_9505.jpg',
-                'italy-105.jpg', 'italy-11.jpg', 'italy-40.jpg', 'italy-53.jpg', 'italy-95.jpg'
-            ],
-            'Eastern Europe': [
-                'DSC04645.jpg', 'DSC04652.jpg', 'DSC04656.jpg', 'DSC04673.jpg', 'DSC04674.jpg',
-                'DSC04706.jpg', 'IMG_8506.jpg', 'IMG_8595.jpg', 'IMG_8714.jpg', 'IMG_8820.jpg',
-                'IMG_8823.jpg', 'IMG_8829.jpg', 'IMG_8836.jpg', 'warsaw-1418.jpg', 'warsaw-1449.jpg'
-            ],
-            'The People': ['IMG_0211.jpg', 'IMG_0219.jpg']
-        },
-        portraits: {
-            'Commissions': [
-                "IMG_9162.jpg",
-                "IMG_9163.jpg",
-                "IMG_7832.JPG",
-                "2020NEWb_1.jpg",
-                "IMG_6142.jpg",
-                "IMG_6151.jpg",
-                "IMG_6170.jpg",
-                "IMG_6178.jpg",
-                "DSC06789.jpg",
-                "DSC06778.jpg",
-                "1.jpg",
-                "DSC06736.jpg"
-                
-            ],
-            'Friends & Family': image_files = [
-                "DSC02459.jpg",
-                "DSC02461.jpg",
-                "DSC05645.jpg",
-                "DSC05385.jpg",
-                "DSC05229.jpg",
-                "DSC05146.jpg",
-                "DSC05137.jpg",
-                "DSC05104.jpg",
-                "IMG_0909.jpg",
-                "IMG_0841.jpg",
-                "IMG_0806.jpg",
-                "IMG_0759.jpg",
-                "IMG_9818.jpg",
-                "hana_2021_amsterdam-8.jpg",
-                "hana_2021_amsterdam-14.jpg",
-                "IMG_9488.jpg",
-                "IMG_9459.jpg",
-                "IMG_9389.jpg",
-                "IMG_9397.jpg",
-                "IMG_9413.jpg",
-                "IMG_8975.jpg",
-                "DSC03094.jpg",
-                "DSC02982.jpg",
-                "DSC06304.jpg",
-                "DSC00622.jpg",
-                "DSC03558.jpg",
-                "DSC03078.jpg",
-                "DSC02967.jpg",
-                "55-DSC06358.jpg",
-                "57-DSC06368.jpg",
-                "DSC07874.JPG"
-            ]            
-        },
-        events: {
-            'Public Events': [
-                "DSC02543.jpg",
-                "DSC02490.jpg",
-                "DSC02501.jpg",
-                "DSC02506.jpg",
-                "DSC02519.jpg",
-                "DSC02566.jpg",
-                "DSC02582.jpg",
-                "DSC02712.jpg",
-                "DSC02602.jpg",
-                "DSC02625.jpg",
-                "DSC02600.jpg",
-                "DSC02547.jpg",
-                "DSC02411.jpg",
-                "IMG_7312.jpg",
-                "IMG_7307.jpg",
-                "IMG_9652.jpg"
-            ],
-            'Private Events': [
-                "bday-60th-167.jpg",
-                "bday-60th-166.jpg",
-                "DSC08732.jpg",
-                "DSC08511.jpg",
-                "DSC08878.jpg",
-                "DSC08701.jpg",
-                "DSC08647.jpg",
-                "IMG_5270closeup.jpg",
-                "_MG_5254.jpg",
-                "IMG_1848.jpg",
-                "_DSC0062.JPG",
-                "_DSC0201.JPG",
-                "_DSC0206.JPG",
-                "_DSC0006.JPG",
-                "HalloweenParty49.jpg",
-                "HalloweenParty44.jpg",
-                "DSC05173.jpg",
-                "DSC04801.jpg",
-                "bday-60th-40.jpg",
-                "bday-60th-6.jpg",
-                "bday-60th-4.jpg"
-            ],
-            'Brands': [
-                'DSC05724.jpg', 'DSC05731.jpg', 'DSC05759.jpg'
-            ]
-        },
-        personal: {
-            'Travel': [
-                "DSC02479.jpg",
-                "bratislava-family-2023-15.jpg",
-                "bratislava-family-2023-11.jpg",
-                "bratislava-family-2023-3.jpg",
-                "italy-19.jpg",
-                "italy-6.jpg",
-                "italy-1.jpg",
-                "IMG_7359.jpg",
-                "IMG_8696.jpg",
-                "IMG_8500.jpg",
-                "IMG_8573.jpg",
-                "IMG_8709.jpg",
-                "IMG_9168.jpg",
-                "IMG_9464.jpg",
-                "49FF53E2-8B17-405D-A21B-849B0275D93B.jpg",
-                "DSC00888.JPG",
-                "DSC06364.jpg",
-                "DSC07516.jpg",
-                "DSC03632.jpg",
-                "DSC03161.jpg",
-                "DSC02950.jpg",
-                "DSC07926.JPG",
-                "DSC07897.JPG",
-                "DSC07816.JPG",
-                "DSC07709.JPG",
-                "DSC07693.JPG",
-                "_MG_4669.jpg"
-            ],
-            'Cars': [
-                "amsterdam-med-1.jpg",
-                "IMG_5346.jpg",
-                "IMG_5266.jpg",
-                "DSC07352.jpg",
-                "DSC07332.jpg",
-                "DSC07188.jpg",
-                "DSC07067.jpg",
-                "DSC07038.jpg",
-                "DSC07027.jpg",
-                "DSC00433.jpg",
-                "IMG_9044.jpg",
-                "DSC07673.JPG",
-                "IMG_3624.jpg",
-                "IMG_3600-v2.jpg",
-                "BMW1.jpg"
-            ],
-            'Experimental': ['6.jpg', 'edit4.jpg'],
-            'Nature': [
-                '78-DSC06461.jpg', 'DSC03859.jpg', 'DSC03864.jpg', 'DSC03873.jpg', 'DSC04339.jpg',
-                'IMG_7355.jpg', 'IMG_7383.jpg', 'IMG_8464.jpg', 'IMG_8793.jpg', 'IMG_8804.jpg',
-                'IMG_8807.jpg', 'IMG_8832.jpg', 'IMG_8835.jpg', 'IMG_8841.jpg', 'IMG_8845.jpg',
-                'IMG_8846.jpg', 'IMG_8920.jpg', 'IMG_9008.jpg', 'italy-23.jpg', 'italy-25.jpg',
-                'italy-32.jpg', 'italy-34.jpg', 'italy-36.jpg'
-            ]
-        }
-    };
-}
 
 // Portfolio data structure - simplified for dynamic loading with custom thumbnails
 const portfolioData = {
@@ -738,56 +559,6 @@ const portfolioData = {
         }
     }
 };
-
-// console.log(portfolioData);
-
-// Portfolio data structure
-// const portfolioData = {
-//     photojournalism: {
-//         'Street Stories': {
-//             photos: ['DSC02950.jpg', 'DSC02967.jpg', 'DSC02982.jpg', 'DSC03056.jpg', 'warsaw-1418.jpg', 'warsaw-1449.jpg']
-//         },
-//         'Eastern Europe': {
-//             photos: ['DSC03078.jpg', 'DSC03094.jpg', 'DSC03161.jpg', 'DSC03558.jpg', 'DSC03632.jpg']
-//         },
-//         'The People': {
-//             photos: ['DSC02950.jpg', 'DSC02967.jpg', 'DSC02982.jpg', 'DSC03056.jpg', 'warsaw-1418.jpg', 'warsaw-1449.jpg']
-//         }
-//     },
-//     portraits: {
-//         'Commissions': {
-//             photos: ['DSC01486.jpg', 'DSC01497.jpg', 'DSC01512.jpg', 'DSC01576.jpg', '_MG_4667.jpg', '_MG_4669.jpg']
-//         },
-//         'Friends & Family': {
-//             photos: ['DSC00533.jpg', 'DSC00559.jpg', 'DSC00582.jpg', 'DSC00622.jpg', 'IMG_3600-v2.jpg', 'IMG_3624.jpg']
-//         }
-//     },
-//     events: {
-//         'Public Events': {
-//             photos: ['BMW1.jpg', '55-DSC06358.jpg', '57-DSC06368.jpg', '78-DSC06461.jpg', 'DSC06304.jpg', 'DSC06358.jpg', 'DSC06364.jpg', 'DSC06666.jpg']
-//         },
-//         'Private Events': {
-//             photos: ['bday-60th-6.jpg', 'bday-60th-40.jpg', 'DSC07516.jpg', 'DSC07991.JPG', 'DSC07968.JPG']
-//         },
-//         'Brands': {
-//             photos: ['BMW1.jpg', '55-DSC06358.jpg', '57-DSC06368.jpg', '78-DSC06461.jpg', 'DSC06304.jpg', 'DSC06358.jpg', 'DSC06364.jpg', 'DSC06666.jpg']
-//         }
-//     },
-//     personal: {
-//         'Travel': {
-//             photos: ['DSC07926.JPG', 'DSC07897.JPG', 'DSC08003.JPG', 'DSC07673.JPG', 'DSC07693.JPG', 'DSC07709.JPG']
-//         },
-//         'Cars': {
-//             photos: ['DSC07926.JPG', 'DSC07897.JPG', 'DSC08003.JPG', 'DSC07673.JPG', 'DSC07693.JPG', 'DSC07709.JPG']
-//         },
-//         'Experimental': {
-//             photos: ['DSC07926.JPG', 'DSC07897.JPG', 'DSC08003.JPG', 'DSC07673.JPG', 'DSC07693.JPG', 'DSC07709.JPG']
-//         },
-//         'Nature': {
-//             photos: ['IMG_8920.jpg', 'IMG_8975.jpg', 'IMG_9008.jpg', 'IMG_9044.jpg', 'DSC04801.jpg', 'DSC04880.jpg', 'DSC05173.jpg']
-//         }
-//     }
-// };
 
 // Initialize portfolio event listeners
 // Polyfill for requestIdleCallback for better browser support
